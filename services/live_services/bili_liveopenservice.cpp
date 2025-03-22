@@ -233,6 +233,7 @@ void BiliLiveOpenService::sendWSHeart()
  */
 void BiliLiveOpenService::post(QString url, MyJson json, NetJsonFunc func)
 {
+    // todo TiAmo 这个kk暂时不知道是什么，先在resource.qrc去掉了，避免直接编译失败。后面再研究这个是干嘛的
     // 秘钥
     static QStringList sl = readTextFile(":/documents/kk").split("\n");
     static const QByteArray accessKeyId = sl.size() > 0 ? QByteArray::fromBase64(sl.at(0).toLatin1()) : "";
