@@ -924,7 +924,7 @@ private:
     // 服务信息
     QString SERVER_DOMAIN = LOCAL_MODE ? "http://localhost:8102" : "http://iwxyi.com:8102";
     QString serverPath = SERVER_DOMAIN + "/server/";
-    int permissionLevel = 0;
+    int permissionLevel = 1;
     bool permissionType[20] = {};
     QTimer* permissionTimer = nullptr;
     QString permissionText = "捐赠版";
