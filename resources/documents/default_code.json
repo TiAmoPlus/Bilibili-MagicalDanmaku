@@ -57,73 +57,73 @@
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^坐骑$",
             "reply": "/// <坐骑·显示坐骑命令>\n[%living%+1]抽坐骑/抽动作/抽食物/抽表情/放生坐骑"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^抽坐骑$",
             "reply": "/// <坐骑·抽坐骑>通过弹幕随机抽取一个坐骑\n// [\"%text%\" != \"\"]*** // 后期禁止弹幕抽坐骑，只允许送礼物抽取\n[%living%+1, %{integral_%uid%}%<10000]*积分不足一万，签到、送礼可获得积分\n[%random100%<2]>triggerReply(_抽到坐骑(%uid%, 龙, %uname%))\n[%random100%>=2, %random100%<4]>triggerReply(_抽到坐骑(%uid%, 赤兔马, %uname%, 恭喜))\n[%random100%>=4, %random100%<6]>triggerReply(_抽到坐骑(%uid%, 老虎, %uname%, 恭喜))\n[%random100%>=7, %random100%<8]>triggerReply(_抽到坐骑(%uid%, 猛龙, %uname%, 恭喜))\n[%random100%>=8, %random100%<9]>triggerReply(_抽到坐骑(%uid%, 巨象, %uname%, 恭喜))\n[%random100%>=9, %random100%<10]>triggerReply(_抽到坐骑(%uid%, 乘黄, %uname%, 恭喜))\n[%random100%>=10, %random100%<11]>triggerReply(_抽到坐骑(%uid%, 霸下, %uname%, 恭喜))\n[%random100%>=11, %random100%<12]>triggerReply(_抽到坐骑(%uid%, 食铁兽, %uname%, 恭喜))\n[%random100%>=12, %random100%<13]>triggerReply(_抽到坐骑(%uid%, 开明兽, %uname%, 恭喜))\n[%random100%>=13, %random100%<14]>triggerReply(_抽到坐骑(%uid%, 青鸾, %uname%, 恭喜))\n[%random100%>=14, %random100%<15]>triggerReply(_抽到坐骑(%uid%, 白螭, %uname%, 恭喜))\n[%random100%>=15, %random100%<20]>triggerReply(_抽到坐骑(%uid%, 汗血宝马, %uname%, 恭喜))\n[%random100%>=20, %random100%<40]>很遗憾，没抽中，请再接再厉！\\n>setValue(integral_%uid%, %[%{integral_%uid%}%-10000]%)\n[%random100%>=40, %random100%<44]>triggerReply(_抽到坐骑(%uid%,陆行鸟, %uname%, ))\n[%random100%>=44, %random100%<50]>triggerReply(_抽到坐骑(%uid%, 骡子, %uname%, ))\n[%random100%>=50, %random100%<60]>triggerReply(_抽到坐骑(%uid%, 马, %uname%, ))\n[%random100%>=60, %random100%<70]>triggerReply(_抽到坐骑(%uid%,山羊, %uname%, ))\n[%random100%>=70, %random100%<80]>triggerReply(_抽到坐骑(%uid%, 猪, %uname%, ))\n[%random100%>=80, %random100%<=100]>triggerReply(_抽到坐骑(%uid%, 驴, %uname%, ))"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^抽食物$",
             "reply": "/// <坐骑·抽食物>随机抽取一个食物，会覆盖坐骑\n[%living%+1, %{integral_%uid%}%<10000]*积分不足一万，签到、送礼可获得积分\n>triggerReply(_抽到食物(%uid%, 巨胜奴, %uname%))\n>triggerReply(_抽到食物(%uid%, 婆罗门轻高面, %uname%))\n>triggerReply(_抽到食物(%uid%, 汉宫棋, %uname%))\n>triggerReply(_抽到食物(%uid%, 长生粥, %uname%))\n>triggerReply(_抽到食物(%uid%, 甜雪, %uname%))\n>triggerReply(_抽到食物(%uid%, 单笼金乳酥, %uname%))\n>triggerReply(_抽到食物(%uid%, 曼陀样夹饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 通花软牛肠, %uname%))\n>triggerReply(_抽到食物(%uid%, 光明虾炙, %uname%))\n>triggerReply(_抽到食物(%uid%, 白龙曜, %uname%))\n>triggerReply(_抽到食物(%uid%, 羊皮花丝, %uname%))\n>triggerReply(_抽到食物(%uid%, 雪婴儿, %uname%))\n>triggerReply(_抽到食物(%uid%, 仙人脔, %uname%))\n>triggerReply(_抽到食物(%uid%, 小天酥, %uname%))\n>triggerReply(_抽到食物(%uid%, 箸头春, %uname%))\n>triggerReply(_抽到食物(%uid%, 过门香, %uname%))\n>triggerReply(_抽到食物(%uid%, 啤酒鸭, %uname%))\n>triggerReply(_抽到食物(%uid%, 水牛花粑粑, %uname%))\n>triggerReply(_抽到食物(%uid%, 紫苏, %uname%))\n>triggerReply(_抽到食物(%uid%, 释迦, %uname%))\n>triggerReply(_抽到食物(%uid%, 水信玄饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 樱饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 姑娘果, %uname%))\n>triggerReply(_抽到食物(%uid%, 芥末, %uname%))\n>triggerReply(_抽到食物(%uid%, 秋刀鱼, %uname%))\n>triggerReply(_抽到食物(%uid%, 雪媚娘, %uname%))\n>triggerReply(_抽到食物(%uid%, 桃酥, %uname%))\n>triggerReply(_抽到食物(%uid%, 云吞, %uname%))\n>triggerReply(_抽到食物(%uid%, 玛奇朵, %uname%))\n>triggerReply(_抽到食物(%uid%, 天妇罗, %uname%))\n>triggerReply(_抽到食物(%uid%, 杨枝甘露, %uname%))\n>triggerReply(_抽到食物(%uid%, 仰望星空派, %uname%))\n>triggerReply(_抽到食物(%uid%, 相思豆, %uname%))\n>triggerReply(_抽到食物(%uid%, 虞美人, %uname%))\n>triggerReply(_抽到食物(%uid%, 恋爱豆腐果, %uname%))\n>triggerReply(_抽到食物(%uid%, 甜爱豆沙窝, %uname%))\n>triggerReply(_抽到食物(%uid%, 美味小河魚, %uname%))\n>triggerReply(_抽到食物(%uid%, 桂花馍, %uname%))\n>triggerReply(_抽到食物(%uid%, 状元腊鹅, %uname%))\n>triggerReply(_抽到食物(%uid%, 薄饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 冰棍, %uname%))\n>triggerReply(_抽到食物(%uid%, 冰沙, %uname%))\n>triggerReply(_抽到食物(%uid%, 布丁, %uname%))\n>triggerReply(_抽到食物(%uid%, 草饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 草莓, %uname%))\n>triggerReply(_抽到食物(%uid%, 肠粉, %uname%))\n>triggerReply(_抽到食物(%uid%, 陈皮, %uname%))\n>triggerReply(_抽到食物(%uid%, 春卷, %uname%))\n>triggerReply(_抽到食物(%uid%, 脆饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 蛋花, %uname%))\n>triggerReply(_抽到食物(%uid%, 蛋挞, %uname%))\n>triggerReply(_抽到食物(%uid%, 蛋筒, %uname%))\n>triggerReply(_抽到食物(%uid%, 豆奶, %uname%))\n>triggerReply(_抽到食物(%uid%, 粉果, %uname%))\n>triggerReply(_抽到食物(%uid%, 橄榄, %uname%))\n>triggerReply(_抽到食物(%uid%, 果冻, %uname%))\n>triggerReply(_抽到食物(%uid%, 红豆, %uname%))\n>triggerReply(_抽到食物(%uid%, 话梅, %uname%))\n>triggerReply(_抽到食物(%uid%, 焦糖, %uname%))\n>triggerReply(_抽到食物(%uid%, 可可, %uname%))\n>triggerReply(_抽到食物(%uid%, 麦豆, %uname%))\n>triggerReply(_抽到食物(%uid%, 米饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 摩卡, %uname%))\n>triggerReply(_抽到食物(%uid%, 抹茶, %uname%))\n>triggerReply(_抽到食物(%uid%, 慕斯, %uname%))\n>triggerReply(_抽到食物(%uid%, 拿铁, %uname%))\n>triggerReply(_抽到食物(%uid%, 奶茶, %uname%))\n>triggerReply(_抽到食物(%uid%, 奶酪, %uname%))\n>triggerReply(_抽到食物(%uid%, 奶绿, %uname%))\n>triggerReply(_抽到食物(%uid%, 奶糖, %uname%))\n>triggerReply(_抽到食物(%uid%, 奶昔, %uname%))\n>triggerReply(_抽到食物(%uid%, 奶油, %uname%))\n>triggerReply(_抽到食物(%uid%, 年糕, %uname%))\n>triggerReply(_抽到食物(%uid%, 牛奶, %uname%))\n>triggerReply(_抽到食物(%uid%, 糯米, %uname%))\n>triggerReply(_抽到食物(%uid%, 刨冰, %uname%))\n>triggerReply(_抽到食物(%uid%, 泡芙, %uname%))\n>triggerReply(_抽到食物(%uid%, 苹果, %uname%))\n>triggerReply(_抽到食物(%uid%, 起司, %uname%))\n>triggerReply(_抽到食物(%uid%, 切糕, %uname%))\n>triggerReply(_抽到食物(%uid%, 曲奇, %uname%))\n>triggerReply(_抽到食物(%uid%, 肉松, %uname%))\n>triggerReply(_抽到食物(%uid%, 软糖, %uname%))\n>triggerReply(_抽到食物(%uid%, 山楂, %uname%))\n>triggerReply(_抽到食物(%uid%, 圣代, %uname%))\n>triggerReply(_抽到食物(%uid%, 寿司, %uname%))\n>triggerReply(_抽到食物(%uid%, 松露, %uname%))\n>triggerReply(_抽到食物(%uid%, 苏打, %uname%))\n>triggerReply(_抽到食物(%uid%, 酥糖, %uname%))\n>triggerReply(_抽到食物(%uid%, 糖豆, %uname%))\n>triggerReply(_抽到食物(%uid%, 糖果, %uname%))\n>triggerReply(_抽到食物(%uid%, 桃酥, %uname%))\n>triggerReply(_抽到食物(%uid%, 桃子, %uname%))\n>triggerReply(_抽到食物(%uid%, 吐司, %uname%))\n>triggerReply(_抽到食物(%uid%, 丸子, %uname%))\n>triggerReply(_抽到食物(%uid%, 西瓜, %uname%))\n>triggerReply(_抽到食物(%uid%, 虾饺, %uname%))\n>triggerReply(_抽到食物(%uid%, 馅饼, %uname%))\n>triggerReply(_抽到食物(%uid%, 雪糕, %uname%))\n>triggerReply(_抽到食物(%uid%, 羊羹, %uname%))\n>triggerReply(_抽到食物(%uid%, 洋芋, %uname%))\n>triggerReply(_抽到食物(%uid%, 椰蓉, %uname%))\n>triggerReply(_抽到食物(%uid%, 芝士, %uname%))\n>很遗憾，没抽中，请再接再厉！\\n>setValue(integral_%uid%, %[%{integral_%uid%}%-10000]%)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^抽动作$",
             "reply": "/// <坐骑·抽动作>坐骑、食物的动作，进行混搭\n[%living%+1, %{integral_%uid%}%<10000]*积分不足一万，签到、送礼可获得积分\n>triggerReply(_抽到动作(%uid%, 骑着, %uname%))\n>triggerReply(_抽到动作(%uid%, 抱着, %uname%))\n>triggerReply(_抽到动作(%uid%, 顶着, %uname%))\n>triggerReply(_抽到动作(%uid%, 扛着, %uname%))\n>triggerReply(_抽到动作(%uid%, 拎着, %uname%))\n>triggerReply(_抽到动作(%uid%, 背着, %uname%))\n>triggerReply(_抽到动作(%uid%, 嘬着, %uname%))\n>triggerReply(_抽到动作(%uid%, 抱着, %uname%))\n>triggerReply(_抽到动作(%uid%, 挑着, %uname%))\n>triggerReply(_抽到动作(%uid%, 推着, %uname%))\n>triggerReply(_抽到动作(%uid%, 拾起, %uname%))\n>triggerReply(_抽到动作(%uid%, 举着, %uname%))\n>很遗憾，没抽中，请再接再厉！\\n>setValue(integral_%uid%, %[%{integral_%uid%}%-10000]%)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^抽表情$",
             "reply": "/// <坐骑·抽表情>随机抽一个表情，可与坐骑动作兼容\n[%living%+1, %{integral_%uid%}%<10000]*积分不足一万，签到、送礼可获得积分\n>triggerReply(_抽到表情(%uid%, 哭着, %uname%))\n>triggerReply(_抽到表情(%uid%, 笑着, %uname%))\n>triggerReply(_抽到表情(%uid%, 跪着, %uname%))\n>triggerReply(_抽到表情(%uid%, 趴着, %uname%))\n>triggerReply(_抽到表情(%uid%, 偷偷, %uname%))\n>triggerReply(_抽到表情(%uid%, 悄悄, %uname%))\n>triggerReply(_抽到表情(%uid%, 躺着, %uname%))\n>triggerReply(_抽到表情(%uid%, 奶凶地, %uname%))\n>triggerReply(_抽到表情(%uid%, 傻傻的, %uname%))\n>triggerReply(_抽到表情(%uid%, 蹦蹦跳跳地, %uname%))\n>triggerReply(_抽到表情(%uid%, 蹦跶着, %uname%))\n>triggerReply(_抽到表情(%uid%, 开心的, %uname%))\n>triggerReply(_抽到表情(%uid%, 高兴的, %uname%))\n>triggerReply(_抽到表情(%uid%, 含着泪水, %uname%))\n>triggerReply(_抽到表情(%uid%, 凶巴巴地, %uname%))\n>triggerReply(_抽到表情(%uid%, 怡怡然, %uname%))\n>triggerReply(_抽到表情(%uid%, 阔步, %uname%))\n>triggerReply(_抽到表情(%uid%, 踉跄地, %uname%))\n>triggerReply(_抽到表情(%uid%, 一溜烟儿, %uname%))\n>triggerReply(_抽到表情(%uid%, 从容, %uname%))\n>triggerReply(_抽到表情(%uid%, 仰天大笑, %uname%))\n>triggerReply(_抽到表情(%uid%, 激动地, %uname%))\n>triggerReply(_抽到表情(%uid%, 甜丝丝的, %uname%))\n>triggerReply(_抽到表情(%uid%, 乐呵呵的, %uname%))\n>triggerReply(_抽到表情(%uid%, 悠哉悠哉地, %uname%))\n>triggerReply(_抽到表情(%uid%, 乐不开支地, %uname%))\n>triggerReply(_抽到表情(%uid%, 激动不已地, %uname%))\n>triggerReply(_抽到表情(%uid%, 心满意足地, %uname%))\n>triggerReply(_抽到表情(%uid%, 颓丧地, %uname%))\n>triggerReply(_抽到表情(%uid%, 脸色铁青地, %uname%))\n>triggerReply(_抽到表情(%uid%, 消沉的, %uname%))\n>triggerReply(_抽到表情(%uid%, 麻木的, %uname%))\n>triggerReply(_抽到表情(%uid%, 落魄地, %uname%))\n>triggerReply(_抽到表情(%uid%, 寂寞的, %uname%))\n>triggerReply(_抽到表情(%uid%, 自责地, %uname%))\n>triggerReply(_抽到表情(%uid%, 愧疚地, %uname%))\n>triggerReply(_抽到表情(%uid%, 悲恸地, %uname%))\n>triggerReply(_抽到表情(%uid%, 苦笑着, %uname%))\n>triggerReply(_抽到表情(%uid%, 惆怅着, %uname%))\n>triggerReply(_抽到表情(%uid%, 揪心地, %uname%))\n>triggerReply(_抽到表情(%uid%, 朝思暮想地, %uname%))\n>triggerReply(_抽到表情(%uid%, 思慕地, %uname%))\n>triggerReply(_抽到表情(%uid%, 心心念念着, %uname%))\n>triggerReply(_抽到表情(%uid%, 满面春风地, %uname%))\n>很遗憾，没抽中，请再接再厉！\\n>setValue(integral_%uid%, %[%{integral_%uid%}%-10000]%)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^_抽到坐骑\\((\\d+),\\s*(.+?),\\s*(.+),\\s*(.*?)\\)$",
             "reply": "/// <坐骑·抽到坐骑>\n[%living%+1]>%$4%%$3%抽到了：%$2%\\n\\\n\t>setValue(integral_%$1%, %[%{integral_%$1%}%-10000]%)\\n\\\n\t>setValue(mount_%$1%, %$2%)\\n\\\n\t>setValue(action_%$1%, 骑着)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^_抽到食物\\((\\d+),\\s*(.+?),\\s*(.+)\\)$",
             "reply": "/// <坐骑·抽到食物>\n[%living%+1]>恭喜%$3%抽到了：%$2%\\n\\\n\t>setValue(integral_%$1%, %[%{integral_%$1%}%-10000]%)\\n\\\n\t>setValue(mount_%$1%, %$2%)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^_抽到动作\\((\\d+),\\s*(.+?),\\s*(.+)\\)$",
             "reply": "/// <坐骑·抽到动作>\n[%living%+1]>恭喜%$3%抽到了：%$2%\\n\\\n\t>setValue(integral_%$1%, %[%{integral_%$1%}%-10000]%)\\n\\\n\t>setValue(action_%$1%, %$2%)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^_抽到表情\\((\\d+),\\s*(.+?),\\s*(.+)\\)$",
             "reply": "/// <坐骑·抽到表情>\n[%living%+1]>恭喜%$3%抽到了：%$2%\\n\\\n\t>setValue(integral_%$1%, %[%{integral_%$1%}%-10000]%)\\n\\\n\t>setValue(face_%$1%, %$2%)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^我的(坐骑|食物)$",
             "reply": "/// <坐骑·我的坐骑>\n[%{mount_%uid%}%]*>%uname%的%$1%：%{mount_%uid%}%\n[%living%+1]>您还没有%$1%"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^(不要|放生|吃掉|恰掉)(坐骑|食物)$",
             "reply": "/// <坐骑·放弃坐骑>\n[%living%+1]>已%$1%您的%$2%%{mount_%uid%}%\\n>setValue(mount_%uid%, )\\n>setValue(action_%uid%, )\n[!%{mount_%uid%}%]*>您还没有%$2%"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
-            "enabled": true,
+            "enabled": false,
             "key": "^(坐骑|食物|表情)(特效|效果)$",
             "reply": "/// <坐骑·效果预览>\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进来\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入直播间\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%光临\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%来临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进来\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入直播间\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%光临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%来临\n[%living%+1]%uname%进入了直播间"
         }
@@ -283,7 +283,7 @@
             "anchor_key": "神奇弹幕:TimerTask",
             "enabled": false,
             "interval": 1800,
-            "text": "/// <定时发送的弹幕>\n喜欢%up_name%的小伙伴可以动动小手点个关注~\n喜欢%up_name%的小伙伴，点点关注不迷路~\n赠送一个灯牌，领取主播专属勋章哦~\n你已经是成熟的观众了，该学会自己上船了~\n[%today_guard%=0]今天%up_name%等到新的舰长了吗？\\n老板们救救可怜的%up_name%吧~\n[%today_guard%>0]今天%up_name%等到新的舰长，还有老板想上船嘛~\n小礼物和弹幕都是对%up_name%的支持哦，比心心~\n有一种关心叫关注，有一种惦记叫入粉\\n还有一种陪伴叫：加入大航海~\nIOS端可关注公众号哔哩哔哩直播姬充值~\n万水千山总是情，点个关注行不行~"
+            "text": "/// <定时发送的弹幕>\n喜欢%up_name%的小伙伴可以动动小手点个关注~\n喜欢%up_name%的小伙伴，点点关注不迷路~\n赠送一个灯牌，领取主播专属勋章哦~\n你已经是成熟的观众了，该学会自己上船了~\n[%today_guard%=0]今天%up_name%等到新的舰长了吗？\\n老板们救救可怜的%up_name%吧~\n[%today_guard%>0]今天%up_name%等到新的舰长，还有老板想上船嘛~\n小礼物和弹幕都是对%up_name%的支持哦，比心心~\n有一种关心叫关注，有一种惦记叫入粉\\n还有一种陪伴叫：加入大航海~\nIOS端可关注wx哔哩哔哩直播姬充值~\n万水千山总是情，点个关注行不行~"
         },
         {
             "anchor_key": "神奇弹幕:TimerTask",
