@@ -138,6 +138,42 @@
             "enabled": false,
             "key": "^(查询热榜|热榜查询)$",
             "reply": "[%admin% || %uid%==%up_uid% || %uid%==%my_uid%]>getData(https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id=%room_id%, CallBackGetInfoByRoomForAreaRankInfo)"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^(\\d+)月盲盒$",
+            "reply": "@%uid%>%$1%月盲盒数量:%[%{blind_gift_num_user_month_%up_uid%_%uid%_%$1%}%+0]%，盈亏:%[%{blind_gift_sum_user_month_%up_uid%_%uid%_%$1%}%+0]%电池"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^(\\d+)月直播间盲盒$",
+            "reply": "[%uid%==%up_uid% || %uid%==%my_uid%]@%uid%>%$1%月直播间盲盒数量:%[%{blind_gift_num_up_month_%up_uid%_%$1%}%+0]%，盈亏:%[%{blind_gift_sum_up_month_%up_uid%_%$1%}%+0]%电池"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^本月盲盒$",
+            "reply": "@%uid%>本月(%time_month%月)盲盒数量:%[%{blind_gift_num_user_month_%up_uid%_%uid%_%time_month%}%+0]%，盈亏:%[%{blind_gift_sum_user_month_%up_uid%_%uid%_%time_month%}%+0]%电池"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^本月直播间盲盒$",
+            "reply": "[%uid%==%up_uid% || %uid%==%my_uid%]@%uid%>本月(%time_month%月)直播间盲盒数量:%[%{blind_gift_num_up_month_%up_uid%_%time_month%}%+0]%，盈亏:%[%{blind_gift_sum_up_month_%up_uid%_%time_month%}%+0]%电池"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^今日盲盒$",
+            "reply": "@%uid%>您今日盲盒数量:%[%{blind_gift_num_today_user_%up_uid%_%uid%}%+0]%，盈亏:%[%{blind_gift_sum_today_user_%up_uid%_%uid%}%+0]%电池"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^今日直播间盲盒$",
+            "reply": "[%uid%==%up_uid% || %uid%==%my_uid%]@%uid%>今日直播间盲盒数量:%[%{blind_gift_num_today_up_%up_uid%}%+0]%，盈亏:%[%{blind_gift_sum_today_up_%up_uid%}%+0]%电池"
         }
     ],
     "block_keys": "",
