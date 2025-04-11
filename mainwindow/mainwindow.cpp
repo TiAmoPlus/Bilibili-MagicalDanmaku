@@ -4793,7 +4793,7 @@ void MainWindow::updatePermission()
 {
     qInfo() << "当前信息：房间=" << ac->roomId << "  主播ID=" << ac->upUid << "  机器人ID=" << ac->cookieUid;
     static int retry_count = 0;
-    permissionLevel = 0;
+    permissionLevel = 1;
     if (liveService->gettingRoom || liveService->gettingUser)
     {
         qDebug() << "仍在获取信息：room=" << liveService->gettingRoom << ", user=" << liveService->gettingUser;
