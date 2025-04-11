@@ -41,6 +41,7 @@ void myMsgOutput(QtMsgType type, const QMessageLogContext &context, const QStrin
     QFile file("debug.log");
     file.open(QIODevice::ReadWrite | QIODevice::Append);
     QTextStream stream(&file);
+    stream.setCodec("UTF-8");
     stream << mmsg << "\r\n";
     file.flush();
     file.close();
