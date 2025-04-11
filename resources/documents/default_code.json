@@ -253,7 +253,7 @@
             "event": "PK_BATTLE_SETTLE"
         },
         {
-            "action": "/// <大乱斗·尊严票>：被碾压时送个吃瓜……（非主播可用）\n[%pk_my_votes%=0, %pk_match_votes%>1000]>sendGift(20004, 1)",
+            "action": "/// <大乱斗·尊严票>：被碾压时送个吃瓜……（非主播可用）\n// 有效场，10电池算一场有效\n// 人气票，有效并且胜场\n//[%pk_my_votes%<10 && %pk_match_votes% <10]>sendGift(33988, %[10-%pk_my_votes%]%)\n// 人气票，有效\n//[%pk_my_votes%<10]>sendGift(33988, %[10-%pk_my_votes%]%)\n\n// 1电池的粉丝牌灯牌，有效并且胜场\n[%pk_my_votes%<10 && %pk_match_votes% <10]>sendGift(31164, %[10-%pk_my_votes%]%)\n// 1电池的粉丝牌灯牌，有效\n//[%pk_my_votes%<10 &&]>sendGift(31164, %[10-%pk_my_votes%]%)\n",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "PK_ENDING"
