@@ -133,6 +133,18 @@
     "block_tip": "",
     "event_action": [
         {
+            "action": "[%living%==1]>timerShot(500, >sendGift(33988, 196))",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "NEW_HOUR"
+        },
+        {
+            "action": "感谢%uname%的sc!",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "SUPER_CHAT_MESSAGE"
+        },
+        {
             "action": "/// <感谢用户分享直播间>\n感谢%uname%分享%up_name%的直播间！",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
@@ -161,18 +173,6 @@
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "MEDAL_UPGRADE"
-        },
-        {
-            "action": "/// <打卡·重置每天打卡人数>\n[%living%+1]>setValue(daka, 0)\\n\\ // 重置今日打卡人数\n\t>removeValuesIf(^daka_keep_(\\d+)$, [!_{daka_today__$1_}_])\\n\\ // 未连续签到断开\n\t>removeValues(daka_today_\\d+) // 重置每人是否打卡",
-            "anchor_key": "神奇弹幕:EventAction",
-            "enabled": false,
-            "event": "NEW_DAY_FIRST"
-        },
-        {
-            "action": "/// <打卡·重置每月打卡天数>\n[%living%+1]>setValues(daka_month_\\d+, 0)",
-            "anchor_key": "神奇弹幕:EventAction",
-            "enabled": false,
-            "event": "NEW_MONTH_FIRST"
         },
         {
             "action": "/// <开播接口>开播QQ群通知（需配置），详见文档\n>connectNet(https://push.xuthus.cc/group/[skey]?c=[开播消息])",
@@ -247,7 +247,7 @@
             "event": "PK_MATCH_INFO"
         },
         {
-            "action": "/// <大乱斗·播报对面舰长信息>\n[%number%>10, %{online_rank_num}% = 0]*对面有%number%名舰长在线，但没人送礼物！\n[%number%>2, %.guard1%>0, %{online_rank_num}% = 0]**对面在线%.guard3%名舰长，%.guard2%名提督，%.guard1%名总督\n[%number%=0, %{online_rank_num}% = 0]对面很惨，没有舰长在线，高能榜也没人\n[%number%=0, %{online_rank_num}% = 0]对面好欺负，没有舰长在线，高能榜也没人\n[%number%=0, %{online_rank_num}% = 0]对面很可怜，没人！\n[%number%>0, %{online_rank_num}% = 0]对面有%number%名舰长在线！\n[%number%=0, %{online_rank_gold}% > 1000]*对面没有舰长在线，但高能榜%{online_rank_num}%人，贡献%>simpleNum(%{online_rank_gold}%)%分\n[%number%=0, %{online_rank_num}% > 0]对面高能榜%{online_rank_num}%人，贡献%>simpleNum(%{online_rank_gold}%)%分\n[%number%>0, %{online_rank_num}% > 0]对面有%number%名舰长在线，高能榜%{online_rank_num}%人，贡献%>simpleNum(%{online_rank_gold}%)%分\n[%number%>10, %{online_rank_gold}% > 10000]*危！对面有%number%名舰长在线，高能榜%{online_rank_num}%人，贡献%>simpleNum(%{online_rank_gold}%)%分",
+            "action": "/// <大乱斗·播报对面舰长信息>\n对面高能榜%{online_rank_num}%人，贡献%>simpleNum(%{online_rank_gold}%)%分，有%number%名大航海在线\\n对面在线%.guard3%名舰长，%.guard2%名提督，%.guard1%名总督",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "PK_MATCH_ONLINE_GUARD"
@@ -283,7 +283,7 @@
             "event": "UPDATE_YEAR"
         },
         {
-            "action": "/// 重置每月打卡天数\n[%living%+1]>setValues(daka_month_\\d+, 0)",
+            "action": "/// <打卡·重置每月打卡天数>\n[%living%+1]>setValues(daka_month_\\d+, 0)",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "UPDATE_MONTH"
