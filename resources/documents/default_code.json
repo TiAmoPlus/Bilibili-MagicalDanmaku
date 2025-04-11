@@ -299,6 +299,24 @@
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "UPDATE_LAST_TIME"
+        },
+        {
+            "action": "// 忽略非盲盒\n[\"%.data.batch_combo_send?.blind_gift?.original_gift_name?%\" == \"\"]***\n// 盲盒礼物，原本价格 与 爆出价格\n[\"%.data.batch_combo_send?.blind_gift?.original_gift_name?%\" != \"\" && %discount_price% != %gift_gold%]>triggerEvent(REPORT_BLIND_GIFT)\\n\\\n\t>triggerEvent(BLIND_GIFT_ADD)",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "SEND_GIFT"
+        },
+        {
+            "action": "// 播报盲盒盈亏\n>addValue(blind_gift_num, %gift_num%)\\n\\\n\t>addValue(blind_gift_sum, %[%[ %[%discount_price%* %gift_num%]% - %gift_gold%]% / 100]%)\\n\\\n\t>setValue(blind_name, %.data.batch_combo_send?.blind_gift?.original_gift_name?% )\\n\\\n\t>enableTimerTask(盲盒盈亏统计, 1)",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "REPORT_BLIND_GIFT"
+        },
+        {
+            "action": "// 累计盲盒盈亏\n>addValue(blind_gift_num_today_user_%up_uid%_%uid%, %gift_num%)\\n\\ // 添加直播间用户今日盲盒数量\n\t>addValue(blind_gift_sum_today_user_%up_uid%_%uid%, %[%[ %[%discount_price%* %gift_num%]% - %gift_gold%]% / 100]%)\\n\\  //添加直播间用户今日盲盒盈亏\n\t>addValue(blind_gift_num_today_up_%up_uid%, %gift_num%)\\n\\\t// 添加主播直播间今日盲盒数量\n\t>addValue(blind_gift_sum_today_up_%up_uid%, %[%[ %[%discount_price%* %gift_num%]% - %gift_gold%]% / 100]%)\\n\\\t// 添加主播直播间今日盲盒盈亏\n\t>addValue(blind_gift_num_up_month_%up_uid%_%time_month%,  %gift_num%)\\n\\\t// 添加主播直播间当月盲盒数量\n\t>addValue(blind_gift_sum_up_month_%up_uid%_%time_month%, %[%[ %[%discount_price%* %gift_num%]% - %gift_gold%]% / 100]%)\\n\\\t\t// 添加主播直播间当月盲盒盈亏\n\t>addValue(blind_gift_num_user_month_%up_uid%_%uid%_%time_month%, %gift_num%)\\n\\\t//添加直播间用户当月盲盒数量\n\t>addValue(blind_gift_sum_user_month_%up_uid%_%uid%_%time_month%, %[%[ %[%discount_price%* %gift_num%]% - %gift_gold%]% / 100]%)\t\t// 添加直播间用户当月盈亏",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "BLIND_GIFT_ADD"
         }
     ],
     "gift": "// ---------- 小礼物不答谢 ----------\n[%gift_gold%=0, %gift_silver%<1000, %gift_num% < 6]*\n// ---------- 普通的答谢 ----------\n感谢%uname%赠送的%gift_name%%punc%\n十分感谢%uname%相赠的%gift_name%%punc%\n谢谢%uname%的%gift_multi_num%%gift_name% ~~~\n感谢%uname%的%gift_multi_num%%gift_name%，么么哒~\n感谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n多谢%uname%的%gift_multi_num%%gift_name%，mua~\n多谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n// ---------- 50元以上的 ----------\n[%gift_gold%>50000]*(cd13:0)哇噢！感谢%uname%的%gift_multi_num%%gift_name%！\\n老板大气！\n// ---------- 指定礼物 ----------\n[%gift_name%=小电视飞船]**哇！谢谢%uname%带大家上太空~\n// ---------- 上船通知 ----------\n[%guard_buy%, %guard_first%!=0]**(cd13:0)哇塞！感谢%uname%开通%gift_name%！\\n老板大气！！！\n[%guard_buy%, %guard_first%=0]**(cd13:0)哇塞！感谢%uname%续费%gift_name%！\\n老板大气！！！\n// 屏蔽自动送的吃瓜\n[%uid%=%my_uid%,%gift_name%=吃瓜]**",
@@ -332,6 +350,12 @@
             "enabled": false,
             "interval": 11,
             "text": "// update_last\n/// 定时查询并且更新上次处理某些事务的时间点\n/// 还没有上次更新记录, 以当前时间作为初次记录，但是不处理更新逻辑\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%==0]>triggerEvent(UPDATE_LAST_TIME)\n/// 跨年了，那肯定也跨月了，跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% != %time_year%]>triggerEvent(UPDATE_YEAR)\\n\\\n\t>triggerEvent(UPDATE_MONTH)\\n\\\n\t>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)\n/// 没跨年 跨月了，那肯定也跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% == %time_year% && %[%{last_update_month_%up_uid%}%+0]% != %time_month%]>triggerEvent(UPDATE_MONTH)\\n\\\n\t>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)\n/// 没跨年，没跨月，只跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% == %time_year% && %[%{last_update_month_%up_uid%}%+0]% == %time_month% && %[%{last_update_day_%up_uid%}%+0]% != %time_day%]>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)"
+        },
+        {
+            "anchor_key": "神奇弹幕:TimerTask",
+            "enabled": false,
+            "interval": 5,
+            "text": "//  盲盒盈亏统计\n[%{blind_gift_sum}% > 0]>本次盲盒(%{blind_gift_num}%个%{blind_name}%)赚到 %{blind_gift_sum}% 个电池\\n\\\n\t{blind_gift_sum}  = 0\\n\\\n\t{blind_gift_num}  = 0\\n\\\n\t>enableTimerTask(盲盒盈亏统计, -1)\n[%{blind_gift_sum}% < 0]>本次盲盒(%{blind_gift_num}%个%{blind_name}%)亏损 %>abs(%{blind_gift_sum}%)% 个电池\\n\\\n\t{blind_gift_sum}  = 0\\n\\\n\t{blind_gift_num}  = 0\\n\\\n\t>enableTimerTask(盲盒盈亏统计, -1)\n[%{blind_gift_sum}% == 0]>本次盲盒(%{blind_gift_num}%个%{blind_name}%)没亏没赚\\n\\\n\t{blind_gift_sum}  = 0\\n\\\n\t{blind_gift_num}  = 0\\n\\\n\t>enableTimerTask(盲盒盈亏统计, -1)"
         }
     ],
     "welcome": "// 只欢迎戴勋章的用户。如果要全部欢迎，只需把下面一行去掉\n[%guard% = 0, %anchor_roomid%!=%room_id%, %strong_notify%=0]**\n// ---------- 正常欢迎 ----------\n欢迎%uname%~\n欢迎%uname%来看%up_name%~\n欢迎%uname%光临~\n%uname%，你来了呀！\n欢迎 %uname%，你终于来啦~\n欢迎 %uname%，终于等到你~\n嗨，%uname%~\n哈喽，%uname%~\n%uname%，哈喽~\n[%medal_level% > 20]欢迎 %uname%，请多多关照~\n欢迎 %uname%，捕捉一只小可爱~\n欢迎小可爱 %uname% ~\n%uname%，%all_greet%~\n%all_greet%，%uname% ~\n%uname%，%greet%%tone/punc%\n// ---------- 欢迎舰长 ----------\n[%guard%]*(cd10:4)欢迎%guard_name% %uname% 光临！\n[%guard%]*(cd10:4)欢迎%guard_name% %uname% 大驾光临！\n[%guard%]*(cd10:4)欢迎%guard_name% %uname% 回家~\n[%guard%]*(cd10:4)欢迎%guard_name% %uname% 归来~\n// ---------- 对面串门 ----------\n[%pk_opposite%]***(cd11:2)%uname%，欢迎串门哦~\n[%pk_opposite%]***(cd11:2)%uname%，欢迎来串门~\n[%pk_opposite%]***(cd11:2)欢迎%uname%串门~\n[%pk_opposite%]***(cd11:2)欢迎对面的%uname%来看%up_name%~\n[%pk_opposite%]***(cd11:2)谢谢%uname%百忙之中串门看%up_name%~\n[%pk_opposite%,%uid%=%pk_uid%]****(cd12:0)谢谢主播%uname%百忙之中来串门~\n// ---------- 串门回来 ----------\n[%pk_view_return%]***(cd11:1)欢迎%uname%串门回来~\n[%pk_view_return%]***(cd11:1)欢迎%uname%串门回家~\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进来\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入直播间\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%光临\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%来临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进来\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入直播间\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%光临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%来临"
