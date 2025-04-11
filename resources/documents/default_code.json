@@ -23,7 +23,7 @@
             "anchor_key": "神奇弹幕:AutoReply",
             "enabled": false,
             "key": "^(签到|打卡)$",
-            "reply": "///<打卡·弹幕打卡> 记录每位用户是第几个打卡以及累计天数\n/// 若要使用，事件中的“NEW_DAY_FIRST”也需开启\n[%{daka_today_%uid%}%]*>您已打过卡\n[%living%+1]>签到成功，您是今天第%[%{daka}%+1]%个，累计%[%{daka_sum_%uid%}%]%天\\n\\\n\t>setValue(daka, %[%{daka}%+1]%)\\n\\\n\t>setValue(uname_%uid%, %uname%)\\n\\\n\t>setValue(daka_today_%uid%, 1)\\n\\\n\t>setValue(daka_sum_%uid%, %[%{daka_sum_%uid%}%+1]%)\\n\\\n\t>setValue(daka_month_%uid%, %[%{daka_month_%uid%}%+1]%)\\n\\\n\t>setValue(daka_keep_%uid%, %[%{daka_keep_%uid%}%+1]%)\\n\\\n\t>setValue(integral_%uid%, %[%{integral_%uid%}%+1000]%)\\n\\\n\t>triggerEvent(DAKA_MONTH_%[%{daka_month_%uid%}%+1]%)"
+            "reply": "///<打卡·弹幕打卡> 记录每位用户是第几个打卡以及累计天数\n/// 若要使用，事件中的“UPDATE_DAY”也需开启\n[%{daka_today_%uid%}%]*>您已打过卡\n[%living%+1]>签到成功，您是今天第%[%{daka}%+1]%个，累计%[%{daka_sum_%uid%}%]%天\\n\\\n\t>setValue(daka, %[%{daka}%+1]%)\\n\\\n\t>setValue(uname_%uid%, %uname%)\\n\\\n\t>setValue(daka_today_%uid%, 1)\\n\\\n\t>setValue(daka_sum_%uid%, %[%{daka_sum_%uid%}%+1]%)\\n\\\n\t>setValue(daka_month_%uid%, %[%{daka_month_%uid%}%+1]%)\\n\\\n\t>setValue(daka_keep_%uid%, %[%{daka_keep_%uid%}%+1]%)\\n\\\n\t>setValue(integral_%uid%, %[%{integral_%uid%}%+1000]%)\\n\\\n\t>triggerEvent(DAKA_MONTH_%[%{daka_month_%uid%}%+1]%)"
         },
         {
             "anchor_key": "神奇弹幕:AutoReply",
@@ -289,7 +289,7 @@
             "event": "UPDATE_MONTH"
         },
         {
-            "action": "[%living%+1]>setValue(daka, 0)\\n\\ // 重置今日打卡人数\n\t>removeValuesIf(^daka_keep_(\\d+)$, [!_{daka_today__$1_}_])\\n\\ // 未连续签到断开\n\t>removeValues(daka_today_\\d+)\\n\\ // 重置每人是否打卡\n\t>removeValues(blind_gift_num_today_user_\\d+_\\d+)\\n\\\t// 重置所有主播_所有用户今天的盲盒数量\n\t>removeValues(blind_gift_sum_today_user_\\d+_\\d+)\\n\\\t// 重置所有主播_所有用户今天的盲盒盈亏\n\t>removeValues(blind_gift_num_today_up_\\d+)\\n\\\t\t// 重置所有主播直播间今天的盲盒数量\n\t>removeValues(blind_gift_sum_today_up_\\d+)\t\t// 重置所有主播直播间今天的盲盒盈亏",
+            "action": "/// <打卡·重置每天打卡人数>\n[%living%+1]>setValue(daka, 0)\\n\\ // 重置今日打卡人数\n\t>removeValuesIf(^daka_keep_(\\d+)$, [!_{daka_today__$1_}_])\\n\\ // 未连续签到断开\n\t>removeValues(daka_today_\\d+)\\n\\ // 重置每人是否打卡\n\t>removeValues(blind_gift_num_today_user_\\d+_\\d+)\\n\\\t// 重置所有主播_所有用户今天的盲盒数量\n\t>removeValues(blind_gift_sum_today_user_\\d+_\\d+)\\n\\\t// 重置所有主播_所有用户今天的盲盒盈亏\n\t>removeValues(blind_gift_num_today_up_\\d+)\\n\\\t\t// 重置所有主播直播间今天的盲盒数量\n\t>removeValues(blind_gift_sum_today_up_\\d+)\t\t// 重置所有主播直播间今天的盲盒盈亏",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "UPDATE_DAY"
