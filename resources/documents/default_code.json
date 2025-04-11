@@ -132,6 +132,12 @@
             "enabled": false,
             "key": "^(查询疯五|疯五查询)$",
             "reply": "/// 提醒疯五数据\n[%admin% || %uid%==%up_uid% || %uid%==%my_uid%]>setValue(get_data_reply_uid, %uid%)\\n\\\n>getData(https://api.live.bilibili.com/xlive/general-interface/v1/crazy_friday/get_crazy_friday_data?room_id=%room_id%&ruid=%up_uid%, CallBackGetCrazyFriday)"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^(查询热榜|热榜查询)$",
+            "reply": "[%admin% || %uid%==%up_uid% || %uid%==%my_uid%]>getData(https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?room_id=%room_id%, CallBackGetInfoByRoomForAreaRankInfo)"
         }
     ],
     "block_keys": "",
@@ -329,6 +335,18 @@
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "CallBackGetCrazyFriday"
+        },
+        {
+            "action": "[%.code%==0]>getData(https://api.live.bilibili.com/xlive/general-interface/v1/rank/getAreaRankInfo?ruid=%up_uid%&conf_id=%.data.new_area_rank_info?.items?.0?.conf_id?%, CallBackGetAreaRankInfo)\n[%.code%!=0]>查询异常",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "CallBackGetInfoByRoomForAreaRankInfo"
+        },
+        {
+            "action": "[%.code% == 0 && %.data.items_new?.4?.room_id?% != 0]>榜单名称:%.data.conf?.rank_name?%\\n\\\n>排名:%.data.items_new?.0?.rank?%，%.data.items_new?.0?.uinfo?.base?.name%，分数:%.data.items_new?.0?.score?%\\n\\\n>排名:%.data.items_new?.1?.rank?%，%.data.items_new?.1?.uinfo?.base?.name%，分数:%.data.items_new?.1?.score?%\\n\\\n>排名:%.data.items_new?.2?.rank?%，%.data.items_new?.2?.uinfo?.base?.name%，分数:%.data.items_new?.2?.score?%\\n\\\n>排名:%.data.items_new?.3?.rank?%，%.data.items_new?.3?.uinfo?.base?.name%，分数:%.data.items_new?.3?.score?%\\n\\\n>排名:%.data.items_new?.4?.rank?%，%.data.items_new?.4?.uinfo?.base?.name%，分数:%.data.items_new?.4?.score?%\n[%.code%==0 && %.data.items_new?.4?.room_id?% == 0 && %.data.items_new?.3?.room_id?% != 0]>榜单名称:%.data.conf?.rank_name?%\\n\\\n>第%.data.items_new?.0?.rank?%名:%.data.items_new?.0?.uinfo?.base?.name%，分数:%.data.items_new?.0?.score?%\\n\\\n>第%.data.items_new?.1?.rank?%名:%.data.items_new?.1?.uinfo?.base?.name%，分数:%.data.items_new?.1?.score?%\\n\\\n>第%.data.items_new?.2?.rank?%名:%.data.items_new?.2?.uinfo?.base?.name%，分数:%.data.items_new?.2?.score?%\\n\\\n>第%.data.items_new?.3?.rank?%名:%.data.items_new?.3?.uinfo?.base?.name%，分数:%.data.items_new?.3?.score?%\n[%.code%==0 && %.data.items_new?.3?.room_id?% == 0 && %.data.items_new?.2?.room_id?% != 0]>榜单名称:%.data.conf?.rank_name?%\\n\\\n>第%.data.items_new?.0?.rank?%名:%.data.items_new?.0?.uinfo?.base?.name%，分数:%.data.items_new?.0?.score?%\\n\\\n>第%.data.items_new?.1?.rank?%名:%.data.items_new?.1?.uinfo?.base?.name%，分数:%.data.items_new?.1?.score?%\\n\\\n>第%.data.items_new?.2?.rank?%名:%.data.items_new?.2?.uinfo?.base?.name%，分数:%.data.items_new?.2?.score?%\n[%.code%==0 && %.data.items_new?.2?.room_id?% == 0 && %.data.items_new?.1?.room_id?% != 0]>榜单名称:%.data.conf?.rank_name?%\\n\\\n>第%.data.items_new?.0?.rank?%名:%.data.items_new?.0?.uinfo?.base?.name%，分数:%.data.items_new?.0?.score?%\\n\\\n>第%.data.items_new?.1?.rank?%名:%.data.items_new?.1?.uinfo?.base?.name%，分数:%.data.items_new?.1?.score?%\n[%.code%==0 && %.data.items_new?.1?.room_id?% == 0 && %.data.items_new?.0?.room_id?% != 0]>榜单名称:%.data.conf?.rank_name?%\\n\\\n>第%.data.items_new?.0?.rank?%名:%.data.items_new?.0?.uinfo?.base?.name%，分数:%.data.items_new?.0?.score?%\n[%.code%==0 && %.data.items_new?.0?.room_id?% == 0]>榜单名称:%.data.conf?.rank_name?%\\n\\\n>暂时无人上榜\n[%.code%!=0]>查询异常",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "CallBackGetAreaRankInfo"
         }
     ],
     "gift": "// ---------- 小礼物不答谢 ----------\n[%gift_gold%=0, %gift_silver%<1000, %gift_num% < 6]*\n// ---------- 普通的答谢 ----------\n感谢%uname%赠送的%gift_name%%punc%\n十分感谢%uname%相赠的%gift_name%%punc%\n谢谢%uname%的%gift_multi_num%%gift_name% ~~~\n感谢%uname%的%gift_multi_num%%gift_name%，么么哒~\n感谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n多谢%uname%的%gift_multi_num%%gift_name%，mua~\n多谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n// ---------- 50元以上的 ----------\n[%gift_gold%>50000]*(cd13:0)哇噢！感谢%uname%的%gift_multi_num%%gift_name%！\\n老板大气！\n// ---------- 指定礼物 ----------\n[%gift_name%=小电视飞船]**哇！谢谢%uname%带大家上太空~\n// ---------- 上船通知 ----------\n[%guard_buy%, %guard_first%!=0]**(cd13:0)哇塞！感谢%uname%开通%gift_name%！\\n老板大气！！！\n[%guard_buy%, %guard_first%=0]**(cd13:0)哇塞！感谢%uname%续费%gift_name%！\\n老板大气！！！\n// 屏蔽自动送的吃瓜\n[%uid%=%my_uid%,%gift_name%=吃瓜]**",
