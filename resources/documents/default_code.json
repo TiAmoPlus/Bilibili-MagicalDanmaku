@@ -187,7 +187,7 @@
     "block_tip": "",
     "event_action": [
         {
-            "action": "[%living%==1]>timerShot(500, >sendGift(33988, 196))",
+            "action": "/// <人气榜，过整点的时候投喂人气票>\n[%living%==1]>timerShot(500, >sendGift(33988, 96))\n// 2倍卡\n//[%living%==1]>timerShot(500, >sendGift(33988, 196))\n// 3倍卡\n//[%living%==1]>timerShot(500, >sendGift(33988, 296))",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "NEW_HOUR"
