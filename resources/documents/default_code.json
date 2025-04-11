@@ -174,6 +174,12 @@
             "enabled": false,
             "key": "^今日直播间盲盒$",
             "reply": "[%uid%==%up_uid% || %uid%==%my_uid%]@%uid%>今日直播间盲盒数量:%[%{blind_gift_num_today_up_%up_uid%}%+0]%，盈亏:%[%{blind_gift_sum_today_up_%up_uid%}%+0]%电池"
+        },
+        {
+            "anchor_key": "神奇弹幕:AutoReply",
+            "enabled": false,
+            "key": "^查询(pk|PK)$",
+            "reply": "[%admin% || %uid%==%up_uid% || %uid%==%my_uid%]>getData(https://api.live.bilibili.com/xlive/general-interface/v1/battle/getBattleTask?ruid=%up_uid%, CallBackGetBattleTask)"
         }
     ],
     "block_keys": "",
@@ -383,6 +389,12 @@
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "CallBackGetAreaRankInfo"
+        },
+        {
+            "action": "[%.code%==0 && %.data.tasks?.2?.task_info?.task_name?%!=\"\"]***第1个任务:%.data.tasks?.0?.task_info?.task_name?%,任务要求:%.data.tasks?.0?.task_info?.need_num?%,已经完成:%.data.tasks?.0?.task_info?.current_num?%\\n\\\n\t第2个任务:%.data.tasks?.1?.task_info?.task_name?%,任务要求:%.data.tasks?.1?.task_info?.need_num?%,已经完成:%.data.tasks?.1?.task_info?.current_num?%\\n\\\n\t第3个任务:%.data.tasks?.2?.task_info?.task_name?%,任务要求:%.data.tasks?.2?.task_info?.need_num?%,已经完成:%.data.tasks?.2?.task_info?.current_num?%\\n\n[%.code%==0 && %.data.tasks?.1?.task_info?.task_name?%!=\"\"]**第1个任务:%.data.tasks?.0?.task_info?.task_name?%,任务要求:%.data.tasks?.0?.task_info?.need_num?%,已经完成:%.data.tasks?.0?.task_info?.current_num?%\\n\\\n\t第2个任务:%.data.tasks?.1?.task_info?.task_name?%,任务要求:%.data.tasks?.1?.task_info?.need_num?%,已经完成:%.data.tasks?.1?.task_info?.current_num?%\\n\n[%.code%==0 && %.data.tasks?.0?.task_info?.task_name?%!=\"\"]*第1个任务:%.data.tasks?.0?.task_info?.task_name?%,任务要求:%.data.tasks?.0?.task_info?.need_num?%,已经完成:%.data.tasks?.0?.task_info?.current_num?%\\n\n[%.code%!=0]*****出错",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "CallBackGetBattleTask"
         }
     ],
     "gift": "// ---------- 小礼物不答谢 ----------\n[%gift_gold%=0, %gift_silver%<1000, %gift_num% < 6]*\n// ---------- 普通的答谢 ----------\n感谢%uname%赠送的%gift_name%%punc%\n十分感谢%uname%相赠的%gift_name%%punc%\n谢谢%uname%的%gift_multi_num%%gift_name% ~~~\n感谢%uname%的%gift_multi_num%%gift_name%，么么哒~\n感谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n多谢%uname%的%gift_multi_num%%gift_name%，mua~\n多谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n// ---------- 50元以上的 ----------\n[%gift_gold%>50000]*(cd13:0)哇噢！感谢%uname%的%gift_multi_num%%gift_name%！\\n老板大气！\n// ---------- 指定礼物 ----------\n[%gift_name%=小电视飞船]**哇！谢谢%uname%带大家上太空~\n// ---------- 上船通知 ----------\n[%guard_buy%, %guard_first%!=0]**(cd13:0)哇塞！感谢%uname%开通%gift_name%！\\n老板大气！！！\n[%guard_buy%, %guard_first%=0]**(cd13:0)哇塞！感谢%uname%续费%gift_name%！\\n老板大气！！！\n// 屏蔽自动送的吃瓜\n[%uid%=%my_uid%,%gift_name%=吃瓜]**",
