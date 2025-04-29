@@ -331,6 +331,12 @@
             "event": "SEND_GIFT"
         },
         {
+            "action": "// update_last\n/// 定时查询并且更新上次处理某些事务的时间点\n/// 还没有上次更新记录, 以当前时间作为初次记录，但是不处理更新逻辑\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%==0]>triggerEvent(UPDATE_LAST_TIME)\n/// 跨年了，那肯定也跨月了，跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% != %time_year%]>triggerEvent(UPDATE_YEAR)\\n\\\n\t>triggerEvent(UPDATE_MONTH)\\n\\\n\t>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)\n/// 没跨年 跨月了，那肯定也跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% == %time_year% && %[%{last_update_month_%up_uid%}%+0]% != %time_month%]>triggerEvent(UPDATE_MONTH)\\n\\\n\t>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)\n/// 没跨年，没跨月，只跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% == %time_year% && %[%{last_update_month_%up_uid%}%+0]% == %time_month% && %[%{last_update_day_%up_uid%}%+0]% != %time_day%]>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "CHECK_LAST_TIME"
+        },
+        {
             "action": "[%living%+1]>removeValues(blind_gift_num_up_month_\\d+)\\n\\\t\t// 重置所有直播间主播每月盲盒数量\n\t>removeValues(blind_gift_sum_today_up_\\d+)\\n\\\t\t// 重置所有直播间主播每月盲盒盈亏\n\t>removeValues(blind_gift_num_user_month_\\d+_\\d+)\\n\\\t// 重置所有直播间所有用户每月盲盒数量\n\t>removeValues(blind_gift_sum_user_month_\\d+_\\d+)\t\t// 重置所有直播间所有用户每月盲盒盈亏",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
@@ -401,6 +407,24 @@
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "ANCHOR_LOT_START"
+        },
+        {
+            "action": "[%living% +1 && %[%{welcome_pause_end_time_%up_uid%}%+0]% != 0 && %timestamp% > %[%{welcome_pause_end_time_%up_uid%}%+0]%]>removeValue(welcome_pause_end_time_%up_uid%)",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "CHECK_WELCOME_PAUSE_END_TIME"
+        },
+        {
+            "action": "// 识别到天选开始，暂定欢迎弹幕\n// 开播中：发个弹幕提醒+设置时间\n[%living% == 1]>setValue(welcome_pause_end_time_%up_uid%, %[%timestamp% + 16 * 60]%)\\n\\\n\t识别到天选开始，暂定欢迎\n// 未开播：设置时间\n[%living% != 1]>setValue(welcome_pause_end_time_%up_uid%, %[%timestamp% + 16 * 60]%)",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "ANCHOR_LOT_START"
+        },
+        {
+            "action": "// 识别到天选结束，恢复欢迎弹幕\n// 开播中：发个弹幕提醒+移除标记\n[%living% == 1]>removeValue(welcome_pause_end_time_%up_uid%)\\n\\\n\t识别到天选结束，恢复欢迎\n// 未开播：移除标记\n[%living% != 1]>removeValue(welcome_pause_end_time_%up_uid%)",
+            "anchor_key": "神奇弹幕:EventAction",
+            "enabled": false,
+            "event": "ANCHOR_LOT_END"
         }
     ],
     "gift": "// ---------- 小礼物不答谢 ----------\n[%gift_gold%=0, %gift_silver%<1000, %gift_num% < 6]*\n// ---------- 普通的答谢 ----------\n感谢%uname%赠送的%gift_name%%punc%\n十分感谢%uname%相赠的%gift_name%%punc%\n谢谢%uname%的%gift_multi_num%%gift_name% ~~~\n感谢%uname%的%gift_multi_num%%gift_name%，么么哒~\n感谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n多谢%uname%的%gift_multi_num%%gift_name%，mua~\n多谢%uname%的%gift_multi_num%%gift_name%，啾咪~\n// ---------- 50元以上的 ----------\n[%gift_gold%>50000]*(cd13:0)哇噢！感谢%uname%的%gift_multi_num%%gift_name%！\\n老板大气！\n// ---------- 指定礼物 ----------\n[%gift_name%=小电视飞船]**哇！谢谢%uname%带大家上太空~\n// ---------- 上船通知 ----------\n[%guard_buy%, %guard_first%!=0]**(cd13:0)哇塞！感谢%uname%开通%gift_name%！\\n老板大气！！！\n[%guard_buy%, %guard_first%=0]**(cd13:0)哇塞！感谢%uname%续费%gift_name%！\\n老板大气！！！\n// 自己不播报\n[%uid%=%my_uid%]**",
@@ -439,7 +463,7 @@
             "anchor_key": "神奇弹幕:TimerTask",
             "enabled": false,
             "interval": 11,
-            "text": "// update_last\n/// 定时查询并且更新上次处理某些事务的时间点\n/// 还没有上次更新记录, 以当前时间作为初次记录，但是不处理更新逻辑\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%==0]>triggerEvent(UPDATE_LAST_TIME)\n/// 跨年了，那肯定也跨月了，跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% != %time_year%]>triggerEvent(UPDATE_YEAR)\\n\\\n\t>triggerEvent(UPDATE_MONTH)\\n\\\n\t>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)\n/// 没跨年 跨月了，那肯定也跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% == %time_year% && %[%{last_update_month_%up_uid%}%+0]% != %time_month%]>triggerEvent(UPDATE_MONTH)\\n\\\n\t>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)\n/// 没跨年，没跨月，只跨天了\n[%living%+1 && %[%{last_update_year_%up_uid%}%+0]%!=0 && %[%{last_update_year_%up_uid%}%+0]% == %time_year% && %[%{last_update_month_%up_uid%}%+0]% == %time_month% && %[%{last_update_day_%up_uid%}%+0]% != %time_day%]>triggerEvent(UPDATE_DAY)\\n\\\n\t>triggerEvent(UPDATE_LAST_TIME)"
+            "text": "/// 此定时任务 相当与一个全局线程 很短时间触发一次，下面应该触发各种需要周期检测的事件。\n/// 即使程序运行中突然退出，崩溃。重新启动后，此定时任务也会触发，各个事件，然后事件里检测更新。\n/// 例如，更新跨天，跨月，跨年的数据更新\n/// 天选暂定欢迎弹幕的截止\n// 更新跨天，跨月，跨年的数据更新\n[%living%+1]>triggerEvent(CHECK_LAST_TIME)\\n\\\n// 天选暂定欢迎弹幕的截止\n>triggerEvent(CHECK_WELCOME_PAUSE_END_TIME)"
         },
         {
             "anchor_key": "神奇弹幕:TimerTask",
@@ -448,5 +472,5 @@
             "text": "/// 定时提醒疯狂\n>getData(https://api.live.bilibili.com/xlive/general-interface/v1/crazy_friday/get_crazy_friday_data?room_id=%room_id%&ruid=%up_uid%, CallBackGetCrazyFriday)"
         }
     ],
-    "welcome": "// 只欢迎戴勋章的用户。如果要全部欢迎，只需把下面一行去掉\n[%guard% = 0, %anchor_roomid%!=%room_id%, %strong_notify%=0]*\n// ---------- 正常欢迎 ----------\n欢迎%uname%~\n欢迎%uname%来看%up_name%~\n欢迎%uname%光临~\n%uname%，你来了呀！\n欢迎 %uname%，你终于来啦~\n欢迎 %uname%，终于等到你~\n嗨，%uname%~\n哈喽，%uname%~\n%uname%，哈喽~\n[%medal_level% > 20]欢迎 %uname%，请多多关照~\n欢迎 %uname%，捕捉一只小可爱~\n欢迎小可爱 %uname% ~\n%uname%，%all_greet%~\n%all_greet%，%uname% ~\n%uname%，%greet%%tone/punc%\n// ---------- 欢迎舰长 ----------\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 光临！\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 大驾光临！\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 回家~\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 归来~\n// ---------- 对面串门 ----------\n[%pk_opposite%]***(cd11:2)%uname%，欢迎串门哦~\n[%pk_opposite%]***(cd11:2)%uname%，欢迎来串门~\n[%pk_opposite%]***(cd11:2)欢迎%uname%串门~\n[%pk_opposite%]***(cd11:2)欢迎对面的%uname%来看%up_name%~\n[%pk_opposite%]***(cd11:2)谢谢%uname%百忙之中串门看%up_name%~\n[%pk_opposite%,%uid%=%pk_uid%]****(cd12:0)谢谢主播%uname%百忙之中来串门~\n// ---------- 串门回来 ----------\n[%pk_view_return%]***(cd11:1)欢迎%uname%串门回来~\n[%pk_view_return%]***(cd11:1)欢迎%uname%串门回家~\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进来\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入直播间\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%光临\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%来临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进来\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入直播间\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%光临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%来临\n// 自己不欢迎\n[%uid%=%my_uid%]*\n// 屏蔽那些买卖流量人气的广告\n[[%uname% ~ ([朲人认魜].*?[気侪氣汽芞])|(小.*?妖.*?网.*?玩)|(1.*?0.*?8.*?7.*?7.*?1.*?3)]]*\n[[%uname% ~ ([呷].*?[朲])]]*\n[[%uname% ~ ([怼懟].*?[朲人认魜].*?[気侪氣汽芞])|(2.*?7.*?9.*?2.*?1.*?0.*?1)]]*"
+    "welcome": "// 只欢迎戴勋章的用户。如果要全部欢迎，只需把下面一行去掉\n[%guard% = 0, %anchor_roomid%!=%room_id%, %strong_notify%=0]*\n// 无消费的用户不欢迎\n//[%wealth_level%<=0]*\n// 天选阶段不欢迎了\n[%timestamp% < %[%{welcome_pause_end_time_%up_uid%}%+0]%]*\n// ---------- 正常欢迎 ----------\n欢迎%uname%~\n欢迎%uname%来看%up_name%~\n欢迎%uname%光临~\n%uname%，你来了呀！\n欢迎 %uname%，你终于来啦~\n欢迎 %uname%，终于等到你~\n嗨，%uname%~\n哈喽，%uname%~\n%uname%，哈喽~\n[%medal_level% > 20]欢迎 %uname%，请多多关照~\n欢迎 %uname%，捕捉一只小可爱~\n欢迎小可爱 %uname% ~\n%uname%，%all_greet%~\n%all_greet%，%uname% ~\n%uname%，%greet%%tone/punc%\n// ---------- 欢迎舰长 ----------\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 光临！\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 大驾光临！\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 回家~\n[%guard%]**(cd10:4)欢迎%guard_name% %uname% 归来~\n// ---------- 对面串门 ----------\n[%pk_opposite%]***(cd11:2)%uname%，欢迎串门哦~\n[%pk_opposite%]***(cd11:2)%uname%，欢迎来串门~\n[%pk_opposite%]***(cd11:2)欢迎%uname%串门~\n[%pk_opposite%]***(cd11:2)欢迎对面的%uname%来看%up_name%~\n[%pk_opposite%]***(cd11:2)谢谢%uname%百忙之中串门看%up_name%~\n[%pk_opposite%,%uid%=%pk_uid%]****(cd12:0)谢谢主播%uname%百忙之中来串门~\n// ---------- 串门回来 ----------\n[%pk_view_return%]***(cd11:1)欢迎%uname%串门回来~\n[%pk_view_return%]***(cd11:1)欢迎%uname%串门回家~\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进来\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%进入直播间\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%光临\n[%{mount_%uid%}%]**%uname%%>getValue(action_%uid%, 骑着)%%{mount_%uid%}%%{face_%uid%}%来临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进来\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%进入直播间\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%光临\n[\"%{face_%uid%}%\"!=\"\", \"%{mount_%uid%}%\"=\"\"]**%uname%%{face_%uid%}%来临\n// 自己不欢迎\n[%uid%=%my_uid%]*\n// 屏蔽那些买卖流量人气的广告\n[[%uname% ~ ([朲人认魜].*?[気侪氣汽芞])|(小.*?妖.*?网.*?玩)|(1.*?0.*?8.*?7.*?7.*?1.*?3)]]*\n[[%uname% ~ ([呷].*?[朲])]]*\n[[%uname% ~ ([怼懟].*?[朲人认魜].*?[気侪氣汽芞])|(2.*?7.*?9.*?2.*?1.*?0.*?1)]]*"
 }
