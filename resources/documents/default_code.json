@@ -415,7 +415,7 @@
             "event": "CHECK_WELCOME_PAUSE_END_TIME"
         },
         {
-            "action": "// 识别到天选开始，暂定欢迎弹幕\n// 开播中：发个弹幕提醒+设置时间\n[%living% == 1]>setValue(welcome_pause_end_time_%up_uid%, %[%timestamp% + 16 * 60]%)\\n\\\n\t识别到天选开始，暂定欢迎\n// 未开播：设置时间\n[%living% != 1]>setValue(welcome_pause_end_time_%up_uid%, %[%timestamp% + 16 * 60]%)",
+            "action": "// 识别到天选开始，暂定欢迎弹幕\n// 开播中：发个弹幕提醒+设置时间\n[%living% == 1]>setValue(welcome_pause_end_time_%up_uid%, %[%timestamp% + %[%.max_time?% + 0]%]%)\\n\\\n\t识别到天选开始，暂定欢迎\n// 未开播：设置时间\n[%living% != 1]>setValue(welcome_pause_end_time_%up_uid%, %[%timestamp% + %[%.max_time?% + 0]%]%)",
             "anchor_key": "神奇弹幕:EventAction",
             "enabled": false,
             "event": "ANCHOR_LOT_START"
