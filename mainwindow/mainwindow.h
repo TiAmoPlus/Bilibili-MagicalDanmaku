@@ -144,7 +144,7 @@ private slots:
 
     void on_languageAutoTranslateCheck_stateChanged(int);
 
-    void on_tabWidget_tabBarClicked(int index);
+    void onExtensionTabWidgetBarClicked(int index);
 
     void on_SendMsgButton_clicked();
 
@@ -735,6 +735,8 @@ private slots:
     void on_clearFansArchivesButton_clicked();
 
     void on_screenMonitorCombo_activated(int index);
+
+    void on_chatGPTModelNameCombo_editTextChanged(const QString &arg1);
 
 private:
     void initView();
