@@ -13,6 +13,8 @@
 #include "textinputdialog.h"
 #include "fileutil.h"
 #include "httpuploader.h"
+#include "rsautil.h"
+#include "debounce.h"
 
 BiliLiveService::BiliLiveService(QObject *parent) : LiveRoomService(parent)
 {
@@ -32,6 +34,8 @@ BiliLiveService::BiliLiveService(QObject *parent) : LiveRoomService(parent)
                 getRobotInfo();
             if (!ac->upUid.isEmpty() && upFace.isNull())
                 getUpInfo(ac->upUid);
+            if (!ac->roomId.isEmpty() && !gettingDanmu)
+                getDanmuInfo();
         });
     });
 }
@@ -209,6 +213,32 @@ void BiliLiveService::getCookieAccount()
         if (!wbiMixinKey.isEmpty())
             getRobotInfo();
     });
+}
+
+void BiliLiveService::getAccountByCookie(const QString& cookie)
+{
+    get("https://api.bilibili.com/x/member/web/account", [=](QJsonObject json){
+        if (json.value("code").toInt() != 0)
+        {
+            showError("子账号登录返回不为0", json.value("message").toString());
+            SubAccount sa;
+            sa.status = json.value("message").toString();
+            emit signalSubAccountChanged(cookie, sa);
+            return ;
+        }
+
+        // 获取用户信息
+        QJsonObject dataObj = json.value("data").toObject();
+        ac->cookieUid = snum(static_cast<qint64>(dataObj.value("mid").toDouble()));
+        ac->cookieUname = dataObj.value("uname").toString();
+        qInfo() << "获取子账号信息：" << ac->cookieUid << ac->cookieUname;
+
+        SubAccount subAccount;
+        subAccount.uid = ac->cookieUid;
+        subAccount.nickname = ac->cookieUname;
+        subAccount.cookie = cookie;
+        emit signalSubAccountChanged(cookie, subAccount);
+    }, cookie);
 }
 
 void BiliLiveService::getNavInfo(NetVoidFunc finalFunc)
@@ -571,7 +601,8 @@ void BiliLiveService::getRoomInfo(bool reconnect, int reconnectCount)
         }
 
         // 获取弹幕信息
-        getDanmuInfo();
+        if (!this->wbiMixinKey.isEmpty())
+            getDanmuInfo();
 
         // 录播
         emit signalCanRecord();
@@ -588,11 +619,19 @@ void BiliLiveService::getRoomInfo(bool reconnect, int reconnectCount)
  */
 void BiliLiveService::getDanmuInfo()
 {
-    QString url = "https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id="+ac->roomId+"&type=0";
+    gettingDanmu = true;
+    QString url = "https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?" + toWbiParam("id="+ac->roomId+"&type=0");
     get(url, [=](QJsonObject json) {
-        if (json.value("code").toInt() != 0)
+        gettingDanmu = false;
+        int code = json.value("code").toInt();
+        if (code != 0)
         {
             qCritical() << s8("获取弹幕信息返回结果不为0：") << json.value("message").toString();
+            // -352尝试触发风控解除
+            if (code == -352)
+            {
+
+            }
             return ;
         }
 
@@ -1362,7 +1401,9 @@ void BiliLiveService::getPkOnlineGuardPageNew2(int page)
 
 void BiliLiveService::getGiftList()
 {
-    get("https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/giftConfig?platform=pc&room_id=" + ac->roomId,
+
+//  get("https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/giftConfig?platform=pc&room_id=" + ac->roomId,
+    get("https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/roomGiftList?platform=pc&room_id=" + ac->roomId,
         [=](MyJson json)
         {
             if (json.code() != 0)
@@ -1372,25 +1413,61 @@ void BiliLiveService::getGiftList()
             }
 
             pl->allGiftMap.clear();
-            auto list = json.data().a("list");
-            for (QJsonValue val : list)
+            auto list = json.data().o("gift_config").o("base_config").a("list");
+            for (const QJsonValueRef val : list)
             {
                 MyJson info = val.toObject();
                 int id = info.i("id");
                 int bag = info.i("bag_gift");
-                if (!bag)
+                if (bag)
                     continue;
                 QString name = info.s("name");
                 QString coinType = info.s("coin_type");
                 int coin = info.i("price");
                 QString desc = info.s("desc");
                 QString img = info.s("img_basic");
-
                 LiveDanmaku gift("", id, name, 1, 0, QDateTime(), coinType, coin);
                 gift.setFaceUrl(img);
                 gift.with(info);
                 pl->allGiftMap[id] = gift;
             }
+            auto roomConfig = json.data().o("gift_config").a("room_config");
+            for (const QJsonValueRef val : roomConfig)
+            {
+                MyJson info = val.toObject();
+                int id = info.i("id");
+                int bag = info.i("bag_gift");
+                if (bag)
+                    continue;
+                QString name = info.s("name");
+                QString coinType = info.s("coin_type");
+                int coin = info.i("price");
+                QString desc = info.s("desc");
+                QString img = info.s("img_basic");
+                LiveDanmaku gift("", id, name, 1, 0, QDateTime(), coinType, coin);
+                gift.setFaceUrl(img);
+                gift.with(info);
+                pl->allGiftMap[id] = gift;
+            }
+//            auto list = json.data().a("list");
+//            for (QJsonValue val : list)
+//            {
+//                MyJson info = val.toObject();
+//                int id = info.i("id");
+//                int bag = info.i("bag_gift");
+//                if (!bag)
+//                    continue;
+//                QString name = info.s("name");
+//                QString coinType = info.s("coin_type");
+//                int coin = info.i("price");
+//                QString desc = info.s("desc");
+//                QString img = info.s("img_basic");
+//
+//                LiveDanmaku gift("", id, name, 1, 0, QDateTime(), coinType, coin);
+//                gift.setFaceUrl(img);
+//                gift.with(info);
+//                pl->allGiftMap[id] = gift;
+//            }
             // qInfo() << "直播间礼物数量：" << pl->allGiftMap.size();
         });
 }
@@ -3247,7 +3324,7 @@ void BiliLiveService::getPkMatchInfo()
         MyJson data = json.data();
         pkRoomInfo = LiveDanmaku();
         pkRoomInfo.with(data);
-        // todo dave 这里的接口不能用了 online_gold_rank_info_v2数据变成null了
+        // 这里的接口不能用了 online_gold_rank_info_v2数据变成null了
         // 尝试直接按照直播间人数超过7人的情况处理，也就是直接调用getPkOnlineGoldPage
         getPkOnlineGoldPage();
 
@@ -3596,6 +3673,7 @@ void BiliLiveService::pkEnd(QJsonObject json)
     emit signalBattleFinished();
 
     QString bestName = "";
+    qint64 bestUid = 0;
     int winnerType = 0;
     if (snum(thisRoomId) == ac->roomId) // init是自己
     {
@@ -3603,6 +3681,18 @@ void BiliLiveService::pkEnd(QJsonObject json)
         matchVotes = data.value("match_info").toObject().value("votes").toInt();
         bestName = data.value("init_info").toObject().value("best_uname").toString();
         winnerType = winnerType1;
+        QJsonArray assist_info = data.value("init_info").toObject().value("assist_info").toArray();
+        for(const QJsonValueRef& one_assist_info : assist_info)
+        {
+            const QJsonValue& one_assist_info_object = one_assist_info.toObject();
+            qint32 rank = one_assist_info_object["rank"].toInt();
+            if (rank == 1)
+            {
+                bestUid = one_assist_info_object["uid"].toInt();
+//                bestName = one_assist_info_object["uname"].toString();
+                break;
+            }
+        }
     }
     else // match是自己
     {
@@ -3610,23 +3700,34 @@ void BiliLiveService::pkEnd(QJsonObject json)
         myVotes = data.value("match_info").toObject().value("votes").toInt();
         bestName = data.value("match_info").toObject().value("best_uname").toString();
         winnerType = winnerType2;
+        QJsonArray assist_info = data.value("match_info").toObject().value("assist_info").toArray();
+        for(const QJsonValueRef& one_assist_info : assist_info)
+        {
+            const QJsonValue& one_assist_info_object = one_assist_info.toObject();
+            qint32 rank = one_assist_info_object["rank"].toInt();
+            if (rank == 1)
+            {
+                bestUid = one_assist_info_object["uid"].toInt();
+//                bestName = one_assist_info_object["uname"].toString();
+                break;
+            }
+        }
     }
 
     bool ping = winnerType1 == winnerType2;
     bool result = winnerType > 0;
 
-    qint64 bestUid = 0;
     int winCode = 0;
     if (!ping)
         winCode = winnerType;
     if (myVotes > 0)
     {
-        for (int i = pkGifts.size()-1; i >= 0; i--)
-            if (pkGifts.at(i).getNickname() == bestName)
-            {
-                bestUid = pkGifts.at(i).getUid();
-                break;
-            }
+//        for (int i = pkGifts.size()-1; i >= 0; i--)
+//            if (pkGifts.at(i).getNickname() == bestName)
+//            {
+//                bestUid = pkGifts.at(i).getUid();
+//                break;
+//            }
         LiveDanmaku danmaku(bestName, bestUid, winCode, myVotes);
         triggerCmdEvent("PK_BEST_UNAME", danmaku.with(data), true);
     }
@@ -3737,30 +3838,45 @@ void BiliLiveService::pkSettle(QJsonObject json)
 
     QString bestName = "";
     int winCode = 0;
+    qint64 bestUid = 0;
     if (snum(thisRoomId) == ac->roomId) // init是自己
     {
         myVotes = data.value("init_info").toObject().value("votes").toInt();
         matchVotes = data.value("match_info").toObject().value("votes").toInt();
-        bestName = data.value("init_info").toObject().value("best_uname").toString();
         winCode = winnerType1;
+        QJsonArray assist_info = data.value("init_info").toObject().value("assist_info").toArray();
+        for(const QJsonValueRef& one_assist_info : assist_info)
+        {
+            const QJsonValue& one_assist_info_object = one_assist_info.toObject();
+            qint32 rank = one_assist_info_object["rank"].toInt();
+            if (rank == 1)
+            {
+                bestUid = one_assist_info_object["uid"].toInt();
+                bestName = one_assist_info_object["uname"].toString();
+                break;
+            }
+        }
     }
     else // match是自己
     {
         matchVotes = data.value("init_info").toObject().value("votes").toInt();
         myVotes = data.value("match_info").toObject().value("votes").toInt();
-        bestName = data.value("match_info").toObject().value("best_uname").toString();
         winCode = winnerType2;
-    }
-
-    qint64 bestUid = 0;
-    if (myVotes > 0)
-    {
-        for (int i = pkGifts.size()-1; i >= 0; i--)
-            if (pkGifts.at(i).getNickname() == bestName)
+        QJsonArray assist_info = data.value("match_info").toObject().value("assist_info").toArray();
+        for(const QJsonValueRef& one_assist_info : assist_info)
+        {
+            const QJsonValue& one_assist_info_object = one_assist_info.toObject();
+            qint32 rank = one_assist_info_object["rank"].toInt();
+            if (rank == 1)
             {
-                bestUid = pkGifts.at(i).getUid();
+                bestUid = one_assist_info_object["uid"].toInt();
+                bestName = one_assist_info_object["uname"].toString();
                 break;
             }
+        }
+    }
+    if (myVotes > 0)
+    {
         LiveDanmaku danmaku(bestName, bestUid, winCode, myVotes);
         triggerCmdEvent("PK_BEST_UNAME", danmaku.with(data), true);
     }
@@ -4206,6 +4322,103 @@ void BiliLiveService::sendXliveHeartBeatX(QString s, qint64 timestamp)
     });
 }
 
+void BiliLiveService::refreshCookie()
+{
+    if (ac->browserData.isEmpty())
+        return;
+    if (!ac->browserCookie.contains("ac_time_value"))
+    {
+        qInfo() << "Cookie不带有refresh_token，不刷新";
+        return;
+    }
+
+    // 1. 检查是否需要刷新
+    MyJson checkJson = getToJson("https://passport.bilibili.com/x/passport-login/web/cookie/info");
+    if (checkJson.code() != 0 || !checkJson.data().b("refresh"))
+    {
+        qDebug() << "不需要刷新Cookie";
+        return;
+    }
+    qInfo() << "准备刷新Cookie：" << checkJson;
+
+    // 2. 生成 CorrespondPath
+    qint64 timestamp = checkJson.data().l("timestamp");
+
+    // 使用 RSA-OAEP 加密
+    /* QString message = QString("refresh_%1").arg(timestamp);
+    QByteArray publicKeyPEM = "-----BEGIN PUBLIC KEY-----\n"
+                             "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDLgd2OAkcGVtoE3ThUREbio0Eg"
+                             "Uc/prcajMKXvkCKFCWhJYJcLkcM2DKKcSeFpD/j6Boy538YXnR6VhcuUJOhH2x71"
+                             "nzPjfdTcqMz7djHum0qSZA0AyCBDABUqCrfNgCiJ00Ra7GmRj+YCK1NJEuewlb40"
+                             "JNrRuoEUXpabUzGB8QIDAQAB\n"
+                             "-----END PUBLIC KEY-----";
+
+    QByteArray encrypted = RSAUtil::rsaEncrypt(message.toUtf8(), publicKeyPEM);
+    QString correspondPath = encrypted.toHex();
+    qDebug() << "生成的correspondPath：" << encrypted << correspondPath;*/
+
+    // 因为算法问题，直接使用在线的
+    MyJson rsaJson = getToJson("https://wasm-rsa.vercel.app/api/rsa?t=" + snum(timestamp));
+    if (rsaJson.code() != 0)
+    {
+        qWarning() << "获取RSA失败：" << rsaJson.msg();
+        return;
+    }
+    // {"timestamp":"1748193134073","hash":"bdfa1f141078f79245f7457d70787eef7504a396efa0a1a038f5a05776ffb9d5b9a1c1e0481089813fbe8dbd87bd39e5a079b7d240a5d73439efe0927796345b6e061842f19e0bea4c284e1cd6a3cf8b8b4e8e21201d9099d693e99d15c97121285216c6c5e123725fba6906b49d385f807b0b1726290fe9c1ce4ef6f766ae40","code":0}
+    QString correspondPath = rsaJson.s("hash");
+    qDebug() << "生成的correspondPath：" << correspondPath;
+
+    // 3. 获取 refresh_csrf
+    QByteArray html = getToBytes(QString("https://www.bilibili.com/correspond/1/%1").arg(correspondPath));
+    QString refresh_csrf = QString(html).split("id=\"1-name\">").last().split("<").first();
+    if (refresh_csrf.isEmpty())
+    {
+        qWarning() << "无法获取refresh_csrf" << html;
+        return;
+    }
+
+    // 4. 刷新 Cookie
+    QString oldRefreshToken = ac->browserCookie.split("ac_time_value=").last().split(";").first();
+    qDebug() << "旧的refresh_token:" << oldRefreshToken;
+    QByteArray postData = QString("csrf=%1&refresh_csrf=%2&source=main_web&refresh_token=%3")
+        .arg(ac->csrf_token)
+        .arg(refresh_csrf)
+        .arg(oldRefreshToken)
+        .toUtf8();
+
+    MyJson refreshJson = postToJson("https://passport.bilibili.com/x/passport-login/web/cookie/refresh", postData, "",
+                                    QList<QPair<QString, QString>>{{"content-type", "application/x-www-form-urlencoded"}});
+    if (refreshJson.code() != 0)
+    {
+        qWarning() << "刷新Cookie失败:" << refreshJson.msg();
+        return;
+    }
+
+    // 5. 确认更新
+    QString newRefreshToken = refreshJson.data().s("refresh_token");
+    postData = QString("csrf=%1&refresh_token=%2")
+        .arg(ac->csrf_token)
+        .arg(oldRefreshToken)
+        .toUtf8();
+
+    MyJson confirmJson = postToJson("https://passport.bilibili.com/x/passport-login/web/confirm/refresh", postData);
+    if (confirmJson.code() != 0)
+    {
+        qWarning() << "确认更新失败:" << confirmJson.msg();
+        return;
+    }
+
+    // 6. 更新 Cookie
+    QString newCookie = ac->browserCookie;
+    newCookie.replace(QRegularExpression("bili_jct=[^;]*"), "bili_jct=" + ac->csrf_token);
+    newCookie.replace(QRegularExpression("ac_time_value=[^;]*"), "ac_time_value=" + newRefreshToken);
+    ac->browserCookie = newCookie;
+
+    // 7. 更新 csrf_token
+    ac->csrf_token = ac->browserCookie.split("bili_jct=").last().split(";").first();
+    qInfo() << "设置新的csrf：" << ac->csrf_token;
+}
+
 void BiliLiveService::appointAdmin(qint64 uid)
 {
     if (ac->upUid != ac->cookieUid)
@@ -4406,7 +4619,7 @@ void BiliLiveService::processNewDayData()
 /**
  * 发送单条弹幕的原子操作
  */
-void BiliLiveService::sendMsg(const QString& msg)
+void BiliLiveService::sendMsg(const QString& msg, const QString& cookie)
 {
     if (us->localMode)
     {
@@ -4414,13 +4627,13 @@ void BiliLiveService::sendMsg(const QString& msg)
         return ;
     }
 
-    sendRoomMsg(ac->roomId, msg);
+    sendRoomMsg(ac->roomId, msg, cookie);
 }
 
 /**
  * 向指定直播间发送弹幕
  */
-void BiliLiveService::sendRoomMsg(QString roomId, const QString& _msg)
+void BiliLiveService::sendRoomMsg(QString roomId, const QString& _msg, const QString& cookie)
 {
     if (ac->browserCookie.isEmpty() || ac->browserData.isEmpty())
     {
@@ -4504,6 +4717,53 @@ void BiliLiveService::sendRoomMsg(QString roomId, const QString& _msg)
         posr = s.length();
     s.replace(posl, posr-posl, roomId);
 
+    // 子账号
+    if (!cookie.isEmpty())
+    {
+        // 提取 csrf（key 为 bili_jct）
+        posl = cookie.indexOf("bili_jct=");
+        if (posl == -1)
+        {
+            showError("发送弹幕", "子账号Cookie中没有找到 bili_jct");
+            qWarning() << "子账号Cookie中没有找到 bili_jct";
+            return ;
+        }
+        posl += 9;
+        posr = cookie.indexOf(";", posl);
+        if (posr == -1)
+            posr = cookie.length();
+        QString csrf = cookie.mid(posl, posr-posl);
+
+        // 替换 csrf=xxx
+        posl = s.indexOf("csrf=");
+        if (posl == -1)
+        {
+            s += "&csrf=";
+            posl = s.length();
+        }
+        else
+            posl += 5;
+        posr = s.indexOf(";", posl);
+        if (posr == -1)
+            posr = s.length();
+        s.replace(posl, posr-posl, csrf);
+
+        // 替换 csrf_token=xxx
+        posl = s.indexOf("csrf_token=");
+        if (posl == -1)
+        {
+            s += "&csrf_token=";
+            posl = s.length();
+        }
+        else
+            posl += 10;
+        posr = s.indexOf("&", posl);
+        if (posr == -1)
+            posr = s.length();
+        s.replace(posl, posr-posl, csrf);
+    }
+
+    // 回复用户
     if (!reply_mid.isEmpty())
     {
         qInfo() << "回复用户：" << reply_mid;
@@ -4581,7 +4841,7 @@ void BiliLiveService::sendRoomMsg(QString roomId, const QString& _msg)
                 localNotify("[错误]" + errorMsg);
             }
         }
-    });
+    }, cookie);
 }
 
 /**
@@ -4589,7 +4849,7 @@ void BiliLiveService::sendRoomMsg(QString roomId, const QString& _msg)
  * 示例：https://api.live.bilibili.com/msg/send,
  * bubble=0&msg=official_147&color=16777215&mode=1&dm_type=1&fontsize=25&rnd=1657851774&roomid=%room_id%&csrf=%csrf%&csrf_token=%csrf%
  */
-void BiliLiveService::sendRoomEmoji(QString roomId, const QString &id)
+void BiliLiveService::sendRoomEmoji(QString roomId, const QString &id, const QString& cookie)
 {
     if (ac->browserCookie.isEmpty() || ac->browserData.isEmpty())
     {
@@ -4602,8 +4862,27 @@ void BiliLiveService::sendRoomEmoji(QString roomId, const QString &id)
     if (ac->roomId.isEmpty())
         return ;
 
+    // 子账号
+    QString csrf = ac->csrf_token;
+    if (!cookie.isEmpty())
+    {
+        // 提取 csrf（key 为 bili_jct）
+        int posl = cookie.indexOf("bili_jct=");
+        if (posl == -1)
+        {
+            showError("发送弹幕", "子账号Cookie中没有找到 bili_jct");
+            qWarning() << "子账号Cookie中没有找到 bili_jct";
+            return ;
+        }
+        posl += 9;
+        int posr = cookie.indexOf(";", posl);
+        if (posr == -1)
+            posr = cookie.length();
+        csrf = cookie.mid(posl, posr-posl);
+    }
+
     QString data = QString("bubble=0&msg=%1&color=16777215&mode=1&dm_type=1&fontsize=25&rnd=1657851774&roomid=%2&csrf=%3&csrf_token=%4")
-        .arg(id).arg(roomId).arg(ac->csrf_token).arg(ac->csrf_token);
+        .arg(id).arg(roomId).arg(csrf).arg(csrf);
 
     // #连接槽
     post("https://api.live.bilibili.com/msg/send", data.toStdString().data(), [=](QJsonObject json){
@@ -4621,7 +4900,7 @@ void BiliLiveService::sendRoomEmoji(QString roomId, const QString &id)
                 errorDesc = "包含直播间屏蔽词";
             }
 
-            showError("发送弹幕失败", errorDesc);
+            showError("发送表情失败", errorDesc);
             localNotify(errorDesc + " -> " + id);
 
             // 重试
@@ -4647,7 +4926,7 @@ void BiliLiveService::sendRoomEmoji(QString roomId, const QString &id)
                 localNotify("[错误]" + errorMsg);
             }
         }
-    });
+    }, cookie);
 }
 
 void BiliLiveService::pullLiveDanmaku()
@@ -4694,7 +4973,7 @@ void BiliLiveService::showFollowCountInAction(qint64 uid, QLabel* statusLabel, Q
     QNetworkAccessManager* manager = new QNetworkAccessManager;
     QNetworkRequest* request = new QNetworkRequest(url);
     request->setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded; charset=UTF-8");
-    request->setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36");
+    request->setHeader(QNetworkRequest::UserAgentHeader, getUserAgent().toLocal8Bit());
     connect(manager, &QNetworkAccessManager::finished, action, [=](QNetworkReply* reply){
         QByteArray data = reply->readAll();
         manager->deleteLater();
@@ -4743,7 +5022,7 @@ void BiliLiveService::showViewCountInAction(qint64 uid, QLabel* statusLabel, QAc
     QNetworkRequest* request = new QNetworkRequest(url);
     request->setHeader(QNetworkRequest::CookieHeader, getCookies());
     request->setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded; charset=UTF-8");
-    request->setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36");
+    request->setHeader(QNetworkRequest::UserAgentHeader, getUserAgent().toLocal8Bit());
     connect(manager, &QNetworkAccessManager::finished, action, [=](QNetworkReply* reply){
         QByteArray ba = reply->readAll();
         manager->deleteLater();
@@ -4809,7 +5088,7 @@ void BiliLiveService::showGuardInAction(qint64 roomId, qint64 uid, QLabel* statu
     QNetworkRequest* request = new QNetworkRequest(url);
     request->setHeader(QNetworkRequest::CookieHeader, getCookies());
     request->setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded; charset=UTF-8");
-    request->setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36");
+    request->setHeader(QNetworkRequest::UserAgentHeader, getUserAgent().toLocal8Bit());
     connect(manager, &QNetworkAccessManager::finished, action, [=](QNetworkReply* reply){
         QByteArray ba = reply->readAll();
         manager->deleteLater();
@@ -4848,7 +5127,7 @@ void BiliLiveService::showPkLevelInAction(qint64 roomId, QLabel* statusLabel, QA
     QNetworkRequest* request = new QNetworkRequest(url);
     request->setHeader(QNetworkRequest::CookieHeader, getCookies());
     request->setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded; charset=UTF-8");
-    request->setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36");
+    request->setHeader(QNetworkRequest::UserAgentHeader, getUserAgent().toLocal8Bit());
     connect(manager, &QNetworkAccessManager::finished, actionUser, [=](QNetworkReply* reply){
         QByteArray ba = reply->readAll();
         manager->deleteLater();

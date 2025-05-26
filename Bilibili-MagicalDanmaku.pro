@@ -103,6 +103,7 @@ INCLUDEPATH += \
     third_party/brotli/include/
 
 SOURCES += \
+    global/usersetting.cpp \
     mainwindow/run_cmd.cpp \
     services/chat_service/chatservice.cpp \
     services/code_runner/chatgptmanager.cpp \
@@ -185,6 +186,8 @@ SOURCES += \
     third_party/qss_editor/qsshighlighteditor.cpp \
     third_party/utils/httpuploader.cpp \
     third_party/utils/microsofttts.cpp \
+    third_party/utils/rsautil.cpp \
+    third_party/utils/string_hash.cpp \
     third_party/utils/warmwishtutil.cpp \
     widgets/buy_vip/buyvipdialog.cpp \
     widgets/csvviewer.cpp \
@@ -236,6 +239,7 @@ SOURCES += \
 
 HEADERS += \
     global/accountinfo.h \
+    global/debounce.h \
     global/platforminfo.h \
     global/runtimeinfo.h \
     global/usersettings.h \
@@ -371,8 +375,10 @@ HEADERS += \
     third_party/utils/microsofttts.h \
     third_party/utils/mysettings.h \
     third_party/utils/pixmaputil.h \
+    third_party/utils/rsautil.h \
     third_party/utils/simplecalculatorutil.h \
     third_party/utils/string_distance_util.h \
+    third_party/utils/string_hash.h \
     third_party/utils/tx_nlp.h \
     third_party/utils/warmwishutil.h \
     widgets/buy_vip/buyvipdialog.h \

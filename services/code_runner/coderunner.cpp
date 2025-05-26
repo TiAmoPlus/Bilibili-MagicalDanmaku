@@ -273,6 +273,11 @@ void CodeRunner::slotSendAutoMsg(bool timeout)
     if (!autoMsgQueues.size())
         autoMsgTimer->stop();
 
+    // 判断是否有子账号信息，并提取相关Cookie
+    QString subAccountArg = danmaku->getSubAccount();
+    QString accountCookie = us->getSubAccountCookie(subAccountArg);
+
+    // 弹幕纯文本，或者命令
     CmdResponse res = NullRes;
     int resVal = 0;
     bool exec = execFuncCallback(msg, *danmaku, res, resVal);
@@ -281,9 +286,9 @@ void CodeRunner::slotSendAutoMsg(bool timeout)
         msg = msgToShort(msg);
         addNoReplyDanmakuText(msg);
         if (danmaku->isRetry())
-            liveService->sendRoomMsg(danmaku->getRoomId(), msg);
+            liveService->sendRoomMsg(danmaku->getRoomId(), msg, accountCookie);
         else
-            liveService->sendMsg(msg);
+            liveService->sendMsg(msg, accountCookie);
         inDanmakuCd = true;
         us->setValue("danmaku/robotTotalSend", ++robotTotalSendMsg);
         ui->robotSendCountLabel->setText(snum(robotTotalSendMsg));
@@ -401,6 +406,15 @@ void CodeRunner::sendCdMsg(QString msg, LiveDanmaku danmaku, int cd, int channel
             {
                 forceAdmin = true;
                 continue;
+            }
+
+            // 发送Cookie
+            re.setPattern("^(?:ac|account)\\s*[=:]\\s*(\\S+)$");
+            if (option.indexOf(re, 0, &match) > -1)
+            {
+                caps = match.capturedTexts();
+                QString sub = caps.at(1);
+                danmaku.setSubAccount(sub);
             }
         }
 
@@ -1319,7 +1333,8 @@ QString CodeRunner::replaceDanmakuVariants(const LiveDanmaku& danmaku, const QSt
     else if (key == "%room_id%")
         return ac->roomId;
     else if (key == "%room_name%" || key == "%room_title%")
-        return ac->roomTitle;
+        return toSingleLine(ac->roomTitle);
+//        return ac->roomTitle;
     else if (key == "%up_name%" || key == "%up_uname%")
         return ac->upName;
     else if (key == "%up_uid%")
@@ -2780,6 +2795,13 @@ QString CodeRunner::toSingleLine(QString text) const
 QString CodeRunner::toMultiLine(QString text) const
 {
     return text.replace("%n%", "\n").replace("%m%", "\\n").replace("\\\"", "\"");
+}
+/**
+ * postJson中  数据来源不管怎么回事 但是json中的转义 不能直接把%n%转义为\n 得转义为\\n
+ */
+QString CodeRunner::toMultiLineForJson(QString text) const
+{
+    return text.replace("%n%", "\\n").replace("%m%", "\\n").replace("\\\"", "\"");
 }
 
 QString CodeRunner::toRunableCode(QString text) const

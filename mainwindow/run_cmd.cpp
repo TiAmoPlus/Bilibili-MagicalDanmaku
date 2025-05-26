@@ -802,7 +802,10 @@ bool MainWindow::execFunc(QString msg, LiveDanmaku &danmaku, CmdResponse &res, i
             qInfo() << "执行命令：" << caps;
             if (roomId == ac->roomId)
                 cr->addNoReplyDanmakuText(msg);
-            liveService->sendRoomMsg(roomId, msg);
+
+            const QString subAccountArg = danmaku.getSubAccount();
+            QString cookie = us->getSubAccountCookie(subAccountArg);
+            liveService->sendRoomMsg(roomId, msg, cookie);
             return true;
         }
     }
@@ -820,7 +823,9 @@ bool MainWindow::execFunc(QString msg, LiveDanmaku &danmaku, CmdResponse &res, i
             qInfo() << "执行命令：" << caps;
             if (roomId == ac->roomId)
                 cr->addNoReplyDanmakuText(msg);
-            liveService->sendRoomEmoji(roomId, msg);
+            const QString subAccountArg = danmaku.getSubAccount();
+            QString cookie = us->getSubAccountCookie(subAccountArg);
+            liveService->sendRoomEmoji(roomId, msg, cookie);
             return true;
         }
     }
@@ -833,7 +838,9 @@ bool MainWindow::execFunc(QString msg, LiveDanmaku &danmaku, CmdResponse &res, i
             QStringList caps = match.capturedTexts();
             QString msg = caps.at(1);
             qInfo() << "执行命令：" << caps;
-            liveService->sendRoomEmoji(ac->roomId, msg);
+            const QString subAccountArg = danmaku.getSubAccount();
+            QString cookie = us->getSubAccountCookie(subAccountArg);
+            liveService->sendRoomEmoji(ac->roomId, msg, cookie);
             return true;
         }
     }
@@ -1155,7 +1162,7 @@ bool MainWindow::execFunc(QString msg, LiveDanmaku &danmaku, CmdResponse &res, i
             QNetworkRequest* request = new QNetworkRequest(url);
             setUrlCookie(url, request);
             request->setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded; charset=UTF-8");
-            request->setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36");
+            request->setHeader(QNetworkRequest::UserAgentHeader, liveService->getUserAgent());
             for (auto header: headers)
             {
                 int find = header.indexOf("=");
@@ -1203,7 +1210,8 @@ bool MainWindow::execFunc(QString msg, LiveDanmaku &danmaku, CmdResponse &res, i
             qInfo() << "执行命令：" << caps;
             QString url = caps.at(1);
             QString data = caps.at(2);
-            data = cr->toMultiLine(data);
+            // json里的换行 不能直接把%n%转义为\n，而是应该转义为\\n
+            data = cr->toMultiLineForJson(data);
             QString callback = caps.size() > 3 ? caps.at(3) : "";
             postJson(url, data.toStdString().data(), [=](QNetworkReply* reply){
                 QByteArray ba(reply->readAll());
