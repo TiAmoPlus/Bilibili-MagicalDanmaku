@@ -232,7 +232,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="roomPage">
        <layout class="QHBoxLayout" name="horizontalLayout_65">
@@ -2356,7 +2356,7 @@ margin: 40px;</string>
             <property name="geometry">
              <rect>
               <x>10</x>
-              <y>1140</y>
+              <y>1180</y>
               <width>171</width>
               <height>301</height>
              </rect>
@@ -2679,9 +2679,9 @@ QPushButton:pressed
             <property name="geometry">
              <rect>
               <x>10</x>
-              <y>1460</y>
+              <y>1520</y>
               <width>211</width>
-              <height>301</height>
+              <height>331</height>
              </rect>
             </property>
             <property name="styleSheet">
@@ -6615,7 +6615,7 @@ QPushButton:pressed
               <x>190</x>
               <y>970</y>
               <width>161</width>
-              <height>91</height>
+              <height>111</height>
              </rect>
             </property>
             <property name="styleSheet">
@@ -6707,7 +6707,7 @@ margin: 40px;</string>
               <x>10</x>
               <y>1010</y>
               <width>161</width>
-              <height>121</height>
+              <height>151</height>
              </rect>
             </property>
             <property name="styleSheet">
@@ -6778,6 +6778,22 @@ margin: 40px;</string>
                </property>
                <property name="text">
                 <string>语法糖</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="CheckBox1" name="codeFileCacheCheck">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;代码使用 &amp;lt;file:xxx&amp;gt; 格式的文件导入时，对其进行缓存，以提高重复运行时的效率，减少磁盘/网络开销。&lt;/p&gt;&lt;p&gt;开启缓存后，如果修改了代码文件，则需要关闭此开关才会刷新缓存。&lt;/p&gt;&lt;p&gt;如果是网络文件，则必定会使用缓存。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>代码文件缓存</string>
                </property>
               </widget>
              </item>

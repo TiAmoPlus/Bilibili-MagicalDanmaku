@@ -10,6 +10,7 @@
 #include "replywidget.h"
 #include "fileutil.h"
 #include "ImageSimilarityUtil.h"
+#include "netutil.h"
 
 CodeRunner::CodeRunner(QObject *parent) : QObject(parent)
 {
@@ -96,6 +97,48 @@ void CodeRunner::releaseData()
 }
 
 /**
+ * 从文件名获取到对于的文件
+ * @param name URL、绝对路径、相对路径、文件名简写等等
+ * @return 文件内容
+ */
+QString CodeRunner::getCodeContentFromFile(QString name)
+{
+    /// 如果是 URL，网络文件
+    if (name.startsWith("http://") || name.startsWith("https://"))
+    {
+        static QMap<QString, QString> cache; // 网络文件的代码的缓存
+        if (cache.contains(name))
+            return cache[name];
+        QByteArray data = NetUtil::getWebFile(name);
+        QString content = QString::fromUtf8(data);
+        cache[name] = content;
+        return content;
+    }
+    
+    /// 如果是文件，那么不进行缓存，因为随时有可能进行修改
+    // 如果是绝对路径或相对路径
+    if (QFile::exists(name))
+        return readTextFileAutoCodec(name);
+
+    /// 如果是文件简写，可以是带后缀，或者不带后缀的
+    // 获取 dataPath/codes/ 下的所有文件名（先是带后缀的）
+    QDir dir(rt->dataPath + "codes/");
+    QStringList files = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+    foreach (QString file, files)
+    {
+        if (file == name)
+            return readTextFileAutoCodec(dir.absoluteFilePath(file));
+    }
+    // 再是不带后缀的
+    foreach (QString file, files)
+    {
+        if (file.left(file.lastIndexOf(".")) == name)
+            return readTextFileAutoCodec(dir.absoluteFilePath(file));
+    }
+    return readTextFileAutoCodec(name);
+}
+
+/**
  * 发送带有变量的弹幕或者执行代码
  * @param msg       多行，带变量
  * @param danmaku   参数
@@ -106,55 +149,63 @@ void CodeRunner::releaseData()
  */
 bool CodeRunner::sendVariantMsg(QString msg, const LiveDanmaku &danmaku, int channel, bool manual, bool delayMine)
 {
+    // 文件判断
+    if (msg.contains("<file:"))
+    {
+        QRegularExpression re("\\s*<\\s*file\\s*:\\s*(.*)\\s*>\\s*");
+        QRegularExpressionMatch match;
+        if (msg.contains(re, &match))
+        {
+            QString placeholder = match.captured(0);
+            QString name = match.captured(1); // 文件名/文件路径
+            qDebug() << "加载代码文件：" << name;
+            QString content = getCodeContentFromFile(name);
+            return sendVariantMsg(msg.replace(placeholder, content), danmaku, channel, manual, delayMine);
+        }
+    }
+
     // 判断是否是自定义编程语言
     if (msg.startsWith("var:"))
     {
         QString code = msg.mid(4);
         code = processDanmakuVariants(code, danmaku);
-        sendVariantMsg(code, danmaku, channel, manual, delayMine);
-        return true;
+        return sendVariantMsg(code, danmaku, channel, manual, delayMine);
     }
     else if (msg.startsWith("js:"))
     {
         QString code = msg.mid(3);
         QString result = jsEngine->runCode(danmaku, code);
-        sendVariantMsg(result, danmaku, channel, manual, delayMine);
-        return true;
+        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
     }
     else if (msg.startsWith("javascript:"))
     {
         QString code = msg.mid(11);
         QString result = jsEngine->runCode(danmaku, code);
-        sendVariantMsg(result, danmaku, channel, manual, delayMine);
-        return true;
+        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
     }
     else if (msg.startsWith("lua:"))
     {
         QString code = msg.mid(4);
         QString result = luaEngine->runCode(danmaku, code);
-        sendVariantMsg(result, danmaku, channel, manual, delayMine);
-        return true;
+        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
     }
     else if (msg.startsWith("python:"))
     {
         QString code = msg.mid(7);
         QString result = pythonEngine->runCode(danmaku, "python", code);
-        sendVariantMsg(result, danmaku, channel, manual, delayMine);
-        return true;
+        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
     }
     else if (msg.startsWith("python3:"))
     {
         QString code = msg.mid(8);
         QString result = pythonEngine->runCode(danmaku, "python3", code);
-        sendVariantMsg(result, danmaku, channel, manual, delayMine);
-        return true;
+        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
     }
     else if (msg.startsWith("py:"))
     {
         QString code = msg.mid(3);
         QString result = pythonEngine->runCode(danmaku, "python", code);
-        sendVariantMsg(result, danmaku, channel, manual, delayMine);
-        return true;
+        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
     }
     
     
@@ -2334,7 +2385,186 @@ QString CodeRunner::replaceDynamicVariants(const QString &funcName, const QStrin
         return snum((long long)hWnd);
 #endif
     }
+    else if (funcName == "getDanmuHistory")
+    {
+        // uid, count, type, format, options
+        if (argList.size() < 2)
+            return errorArg("uid, count");
+        QString uid = argList.at(0); // 指定UID或者所有
+        int count = argList.at(1).toInt(); // 最大弹幕数量（仅限本次监听有的）
+        QString format = argList.size() > 2 ? argList.at(2).toLower() : ""; // 每行弹幕的格式
+        QString type = argList.size() > 3 ? argList.at(3).toLower() : ""; // 输出类型
+        QString options = argList.size() > 4 ? argList.at(4).toLower() : ""; // 其他选项
+        
+        if (count == 0)
+            count = 100;
 
+        // 获取历史弹幕
+        QList<LiveDanmaku> danmuList;
+        if (uid.isEmpty() || uid == "0" || uid == "all") // 所有
+        {
+            danmuList = liveService->getAllDanmus(count);
+        }
+        else // 指定 UID
+        {
+            danmuList = liveService->getDanmusByUID(uid.toLongLong(), count);
+        }
+        if (danmuList.isEmpty())
+        {
+            qWarning() << "没有找到弹幕" << args;
+            return "";
+        }
+
+        // 其他选项
+        if (options.contains("reverse"))
+        {
+            std::reverse(danmuList.begin(), danmuList.end());
+        }
+        if (options.contains("sort_by_time"))
+        {
+            std::sort(danmuList.begin(), danmuList.end(), [](const LiveDanmaku &a, const LiveDanmaku &b) {
+                return a.getTimeline() < b.getTimeline();
+            });
+        }
+        if (options.contains("sort_by_uid"))
+        {
+            std::sort(danmuList.begin(), danmuList.end(), [](const LiveDanmaku &a, const LiveDanmaku &b) {
+                return a.getUid() < b.getUid();
+            });
+        }
+        // 总字数上限（按每条长度的和）
+        QRegularExpression re("word_count\\s*<\\s*(\\d+)");
+        QRegularExpressionMatch match;
+        int wordCount = 0;
+        if (options.contains(re, &match))
+        {
+            wordCount = match.captured(1).toInt();
+        }
+
+        // 每行弹幕的格式
+        if (format.isEmpty())
+            format = "{time(MM-dd hh:mm)} {uname}:{text}";
+        auto toFormatLine = [=](const LiveDanmaku &danmu) -> QString {
+            QString line = format;
+            QRegularExpression re("\\{time\\((.*?)?\\)\\}\\s*");
+            QRegularExpressionMatch match;
+            if (line.contains(re, &match))
+            {
+                QString time = match.captured(0);
+                QString timeFormat = match.captured(1);
+                line.replace(time, danmu.getTimeline().toString(timeFormat));
+            }
+            line.replace("{uid}", QString::number(danmu.getUid()));
+            line.replace("{uname}", danmaku.getNickname());
+            line.replace("{text}", danmu.getText());
+            return line;
+        };
+
+        // 输出的类型：line, text, json, list, gpt
+        if (type.isEmpty())
+            type = "text";
+        // 生成结果并返回
+        if (type == "line" || type == "text" || type == "list") // 输出为文本
+        {
+            QStringList lines;
+            foreach (LiveDanmaku danmu, danmuList)
+            {
+                lines.append(toFormatLine(danmu));
+            }
+
+            if (wordCount > 0)
+            {
+                int total = 0;
+                for (int i = lines.size() - 1; i >= 0; i--)
+                {
+                    QString line = lines.at(i);
+                    total += line.length();
+                    if (total > wordCount)
+                    {
+                        lines = lines.mid(i);
+                        break;
+                    }
+                }
+            }
+            if (type == "line")
+                return lines.join(";");
+            else if (type == "list")
+                return lines.join("\n");
+            else
+                return lines.join("%n%");
+        }
+        else if (type == "json")
+        {
+            QJsonArray jsonArray;
+            foreach (LiveDanmaku danmu, danmuList)
+            {
+                QJsonObject jsonObj;
+                jsonObj["time"] = danmu.getTimeline().toString();
+                jsonObj["uid"] = danmu.getUid();
+                jsonObj["text"] = danmu.getText();
+                jsonArray.append(jsonObj);
+            }
+            if (wordCount > 0)
+            {
+                int total = 0;
+                QJsonArray newArray;
+                for (int i = jsonArray.size() - 1; i >= 0; i--)
+                {
+                    QJsonObject jsonObj = jsonArray.at(i).toObject();
+                    total += jsonObj["text"].toString().length();
+                    if (total > wordCount)
+                    {
+                        // 从当前位置开始,将剩余元素添加到新数组
+                        for (int j = i; j < jsonArray.size(); j++)
+                        {
+                            newArray.append(jsonArray.at(j));
+                        }
+                        jsonArray = newArray;
+                        break;
+                    }
+                }
+            }
+            return QJsonDocument(jsonArray).toJson(QJsonDocument::Compact);
+        }
+        else if (type == "gpt") // 输出为 GPT 的 JSON 格式
+        {
+            QJsonArray jsonArray;
+            foreach (LiveDanmaku danmu, danmuList)
+            {
+                QJsonObject jsonObj;
+                jsonObj["role"] = "user";
+                jsonObj["content"] = toFormatLine(danmu);
+                jsonArray.append(jsonObj);
+            }
+            if (wordCount > 0)
+            {
+                int total = 0;
+                QJsonArray newArray;
+                for (int i = jsonArray.size() - 1; i >= 0; i--)
+                {
+                    QJsonObject jsonObj = jsonArray.at(i).toObject();
+                    total += jsonObj["content"].toString().length();
+                    if (total > wordCount)
+                    {
+                        // 从当前位置开始,将剩余元素添加到新数组
+                        for (int j = i; j < jsonArray.size(); j++)
+                        {
+                            newArray.append(jsonArray.at(j));
+                        }
+                        jsonArray = newArray;
+                        break;
+                    }
+                }
+            }
+            QString full = QJsonDocument(jsonArray).toJson(QJsonDocument::Compact);
+            full = full.mid(1, full.length() - 2); // 去掉前后的[]，因为要放在gpt的参数里面
+            return full;
+        }
+        else
+        {
+            liveService->showError(funcName, "无法识别的输出类型：" + type);
+        }
+    }
 
     return "";
 }
