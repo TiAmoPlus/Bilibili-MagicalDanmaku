@@ -829,7 +829,7 @@ border-image: url(C:/Path/To/Image.png)
 
 `%csrf%`为用户cookie，用于连接B站的API，结合本程序的 `connectNet`(GET)、`postData`(POST)，向服务器发送指定数据。
 
-### 招呼变量
+#### 招呼变量
 
 | 变量      | 描述           | 示例                                              |
 | --------- | -------------- | ------------------------------------------------- |
@@ -841,7 +841,7 @@ border-image: url(C:/Path/To/Image.png)
 | punc      | 标点           | “~”或“！”                                     |
 | tone/punc | 语气词或标点   | 上面两项，适用于和%greet%结合                     |
 
-### 计算变量
+#### 计算变量
 
 | 变量     | 描述                | 注意事项                               |
 | -------- | ------------------- | -------------------------------------- |
@@ -865,60 +865,123 @@ border-image: url(C:/Path/To/Image.png)
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | %n%  | 替换为换行符 `\n`，目前仅支持：`postData()`、`postJson()`、`writeTextFile()`、`appendFileLine()`、`sendToSockets()`、`sendToLastSocket()`、`runCommandLine()`、`sendLongText()` |
 
+### 代码展开
+
+目前只有一个：`#traverseJson(json_path, code)`，遍历 JSON 的指定内容，并展开为代码列表。
+
+用来遍历不确定的 JSON 数据，可以是 JSON 对象，或者 JSON 数组。
+
+参数说明：
+
+- path: 本程序语法中的 JSON 路径，不带`%`，如 `.data?.array?`，对应具体的对象或数组
+- code: 要执行的代码，需要进行转义：`%` 写作 `\%`，`\n` 写作 `%n%` 等
+
+如果是 JSON 数组：
+
+- `code` 中引用到的 JSON 数组索引使用 `\%i\%` 来获取（实际上`%i%` 也可以）
+
+如果是 JSON 对象：
+
+- `code` 中引用到的 JSON 键值对使用 `\%key\%` 来获取
+
+##### 示例：知识库列表
+
+使用 AI 检查不定数量的知识卡片，其JSON 格式：
+
+```json
+{
+    "type": "回答",
+    "msg": "测试内容",
+    "tip":"这是测试内容",
+    "knowledge":[
+        {"name": "知识1", "content": "这是知识1的内容"},
+        {"name": "知识2","content": "这是知识2的内容"},
+        {"name": "知识3","content": "这是知识3的内容"}
+    ]
+}
+```
+
+如果需要展开显示所有 `knowledge` 中的内容：
+
+```
+#traverseJson(.knowledge, >localNotify(【\%.knowledge.\%i\%.name\%】\%.knowledge.\%i\%.content\%))
+```
+
+会展开为代码：
+
+```
+>localNotify(【%.knowledge.0.name%】%.knowledge.0.content%)\n\
+	>localNotify(【%.knowledge.1.name%】%.knowledge.1.content%)\n\
+	>localNotify(【%.knowledge.2.name%】%.knowledge.2.content%)
+```
+
+最后运行结果：
+
+```
+【知识1】这是知识1的内容
+【知识2】这是知识2的内容
+【知识3】这是知识3的内容
+```
+
+
+
 ### 函数计算
 
 按指定格式，获取动态的数值，格式：`%>func(args)%`
 
-| 函数                                                        | 中文             | 描述                                                                                                                                                                                                            |
-| ----------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| cd(channel)                                                 | 冷却通道         | 获取冷却通道剩下的秒数                                                                                                                                                                                          |
-| wait(channel)                                               | 等待通道         | 获取等待通道不是自己的弹幕数量                                                                                                                                                                                  |
-| time(format)                                                | 格式化时间       | 当前时间转换为数值，如 yyyy-MM-dd                                                                                                                                                                               |
-| unameToUid(uname)                                           | 查找用户名       | 由部分昵称倒找弹幕记录，获得UID                                                                                                                                                                                 |
-| inputText(title, default)                                   | 输入文本         | 输入文本，两个参数都可省略                                                                                                                                                                                      |
-| strlen(text)                                                | 取文本长度       | 一串文字的长度                                                                                                                                                                                                  |
-| trim(text)                                                  | 删首尾空         | 去掉字符串首尾的空格和制表符                                                                                                                                                                                    |
-| substr(text, left, length)                                  | 取子串           | 获取文字的一部分                                                                                                                                                                                                |
-| simpleName(name)                                            | 昵称简化         |                                                                                                                                                                                                                 |
-| simpleNum(number)                                           | 数值简化         |                                                                                                                                                                                                                 |
-| inGameUsers(listId, uid)                                    | 在游戏用户中     | listId可省略。程序重启数据会清空                                                                                                                                                                                |
-| inGameNumbers(listId, num)                                  | 在游戏数值中     | listId可省略，程序重启数据仍在                                                                                                                                                                                  |
-| inGameTexts(listId, text)                                   | 在游戏文本中     | listId可省略，程序重启数据仍在                                                                                                                                                                                  |
-| getValue(key, def)                                          | 取变量值         | 等同于 `%{key}%`，默认值def可省略                                                                                                                                                                             |
-| random(min, max)                                            | 取随机数         | 包含两端数字                                                                                                                                                                                                    |
-| randomArray(a, b, c, d...)                                  | 随机数组         | 任意多参数，随机返回其中一个                                                                                                                                                                                    |
-| filterReject(filter)                                        | 过滤器拒绝       | 被对应filter拒绝则返回1,否则返回0（参考过滤器示例）                                                                                                                                                             |
-| inFilterList(filter, content)                               | 在过滤列表中     | 包含在空格分隔的词库中则返回1（参考过滤器示例）                                                                                                                                                                 |
-| inFilterMatch(filter, content)                              | 在过滤正则中     | 满足正则则返回1（参考过滤器示例）                                                                                                                                                                               |
-| fileExists                                                  | 文件存在         | 有这个文件则返回1，否则0                                                                                                                                                                                        |
-| abs(val)                                                    | 取绝对值         |                                                                                                                                                                                                                 |
-| log2(val)                                                   | 取对数2          |                                                                                                                                                                                                                 |
-| log10(val)                                                  | 取对数10         |                                                                                                                                                                                                                 |
-| pow2(val)                                                   | 取平方           |                                                                                                                                                                                                                 |
-| pow(val, a)                                                 | 取乘方           |                                                                                                                                                                                                                 |
-| pasteText()                                                 | 粘贴文字         | 获取剪贴板的文本                                                                                                                                                                                                |
-| getScreenPositionColor(wid, x, y)                           | 获取屏幕位置颜色 | wid为屏幕ID（一般为0），x y 为横纵坐标，返回例如 `#f0f0f0` 的颜色格式                                                                                                                                         |
-| getWindowPositionColor(name, x, y)                          | 获取窗口位置颜色 | name 为窗口名字（可以是部分）或者句柄ID，不能是最小化窗口                                                                                                                                                       |
-| execReplyResult(text)                                       | 执行回复结果     | 获取满足text的第一个回复的执行结果；结果中若存在命令则会执行，若有换行符“\n”则会返回用它分隔的单行文字                                                                                                        |
-| execEventResult(event)                                      | 执行事件结果     | 获取指定事件的执行结果，重复则取第一个，同上                                                                                                                                                                    |
-| readTextFile(fileName)                                      | 读取文本文件     | 读取文本文件中的所有内容，所有换行符 `\n` 将会被替换为 `%n%`                                                                                                                                                |
-| getTextFileLine(fileName, line)                             | 获取文本文件行   | 读取文本文件中的第 line 行，行数从 1 开始                                                                                                                                                                       |
-| getTextFileLineCount(fileName)                              | 获取文本文件行数 | 读取文本文件中的所有行数（以 `\n` 为准）                                                                                                                                                                      |
+| 函数                                                        | 中文             | 描述                                                         |
+| ----------------------------------------------------------- | ---------------- | ------------------------------------------------------------ |
+| cd(channel)                                                 | 冷却通道         | 获取冷却通道剩下的秒数                                       |
+| wait(channel)                                               | 等待通道         | 获取等待通道不是自己的弹幕数量                               |
+| time(format)                                                | 格式化时间       | 当前时间转换为数值，如 yyyy-MM-dd                            |
+| unameToUid(uname)                                           | 查找用户名       | 由部分昵称倒找弹幕记录，获得UID                              |
+| ignoreEmpty(text)                                           | 忽略空           | 当text为空字符串或者各种括号、引号等包裹的空白内容时进行忽略，若非空则返回原text |
+| inputText(title, default)                                   | 输入文本         | 输入文本，两个参数都可省略                                   |
+| strlen(text)                                                | 取文本长度       | 一串文字的长度                                               |
+| trim(text)                                                  | 删首尾空         | 去掉字符串首尾的空格和制表符                                 |
+| substr(text, left, length)                                  | 取子串           | 获取文字的一部分                                             |
+| simpleName(name)                                            | 昵称简化         |                                                              |
+| simpleNum(number)                                           | 数值简化         |                                                              |
+| inGameUsers(listId, uid)                                    | 在游戏用户中     | listId可省略。程序重启数据会清空                             |
+| inGameNumbers(listId, num)                                  | 在游戏数值中     | listId可省略，程序重启数据仍在                               |
+| inGameTexts(listId, text)                                   | 在游戏文本中     | listId可省略，程序重启数据仍在                               |
+| getValue(key, def)                                          | 取变量值         | 等同于 `%{key}%`，默认值def可省略                            |
+| random(min, max)                                            | 取随机数         | 包含两端数字                                                 |
+| randomArray(a, b, c, d...)                                  | 随机数组         | 任意多参数，随机返回其中一个                                 |
+| filterReject(filter)                                        | 过滤器拒绝       | 被对应filter拒绝则返回1,否则返回0（参考过滤器示例）          |
+| inFilterList(filter, content)                               | 在过滤列表中     | 包含在空格分隔的词库中则返回1（参考过滤器示例）              |
+| inFilterMatch(filter, content)                              | 在过滤正则中     | 满足正则则返回1（参考过滤器示例）                            |
+| fileExists                                                  | 文件存在         | 有这个文件则返回1，否则0                                     |
+| abs(val)                                                    | 取绝对值         |                                                              |
+| log2(val)                                                   | 取对数2          |                                                              |
+| log10(val)                                                  | 取对数10         |                                                              |
+| pow2(val)                                                   | 取平方           |                                                              |
+| pow(val, a)                                                 | 取乘方           |                                                              |
+| pasteText()                                                 | 粘贴文字         | 获取剪贴板的文本                                             |
+| getScreenPositionColor(wid, x, y)                           | 获取屏幕位置颜色 | wid为屏幕ID（一般为0），x y 为横纵坐标，返回例如 `#f0f0f0` 的颜色格式 |
+| getWindowPositionColor(name, x, y)                          | 获取窗口位置颜色 | name 为窗口名字（可以是部分）或者句柄ID，不能是最小化窗口    |
+| execReplyResult(text)                                       | 执行回复结果     | 获取满足text的第一个回复的执行结果；结果中若存在命令则会执行，若有换行符“\n”则会返回用它分隔的单行文字 |
+| execEventResult(event)                                      | 执行事件结果     | 获取指定事件的执行结果，重复则取第一个，同上                 |
+| readTextFile(fileName)                                      | 读取文本文件     | 读取文本文件中的所有内容，所有换行符 `\n` 将会被替换为 `%n%` |
+| getTextFileLine(fileName, line)                             | 获取文本文件行   | 读取文本文件中的第 line 行，行数从 1 开始                    |
+| getTextFileLineCount(fileName)                              | 获取文本文件行数 | 读取文本文件中的所有行数（以 `\n` 为准）                     |
 | compareScreenShot(screenId, x, y, w, h, path[, other args]) | 比较窗口截图     | 比较当前窗口的截图与指定图片文件的相似度。<br />screenId:屏幕ID，只有一个屏幕则为0；x/y/w/h:坐标与宽高；path:要比较的文件路径。<br />返回一个0到100的数字，表示相似程度。具体请参考[示例](#示例：定时监测屏幕内容) |
-| getScreenWidth(screenId)                                    | 获取屏幕宽度     | 获取指定显示器的屏幕宽度。如果不指定屏幕ID，则默认为0                                                                                                                                                           |
-| getScreenHeight(screenId)                                   | 获取屏幕高度     | 同上                                                                                                                                                                                                            |
-| findWindow(窗口标题)                                        | 查找窗口         | 根据完整的窗口标题或类名来查找顶级窗口（不搜索子窗口），返回一个窗口句柄（hwnd），可用于作为修改窗口的命令的参数。结合 `spy++`工具来获取标题或类名                                                            |
-| getForegroundWindow()                                       | 获取前景窗口     | 获取当前具有焦点的窗口的句柄（hwnd）                                                                                                                                                                            |
-| isWindowFullScreen(hwnd)                                    | 窗口是否全屏     | 判断窗口是否全屏（不包含最大化），可用于判断游戏全屏、视频全屏                                                                                                                                                  |
-| getCursorPos(x/y)                                           | 获取鼠标位置     | 获取当前鼠标的位置，参数为 x 或 y 字符串                                                                                                                                                                        |
-| getWindowRect(hwnd, x/y/w/h)                                | 获取窗口位置     | 获取指定窗口几何坐标的值                                                                                                                                                                                        |
-| getWindowFromPoint(x, y)                                    | 获取坐标所在窗口 | 获取屏幕上坐标为(x,y)的位置指向的最前面的窗口                                                                                                                                                                   |
+| getScreenWidth(screenId)                                    | 获取屏幕宽度     | 获取指定显示器的屏幕宽度。如果不指定屏幕ID，则默认为0        |
+| getScreenHeight(screenId)                                   | 获取屏幕高度     | 同上                                                         |
+| findWindow(窗口标题)                                        | 查找窗口         | 根据完整的窗口标题或类名来查找顶级窗口（不搜索子窗口），返回一个窗口句柄（hwnd），可用于作为修改窗口的命令的参数。结合 `spy++`工具来获取标题或类名 |
+| getForegroundWindow()                                       | 获取前景窗口     | 获取当前具有焦点的窗口的句柄（hwnd）                         |
+| isWindowFullScreen(hwnd)                                    | 窗口是否全屏     | 判断窗口是否全屏（不包含最大化），可用于判断游戏全屏、视频全屏 |
+| getCursorPos(x/y)                                           | 获取鼠标位置     | 获取当前鼠标的位置，参数为 x 或 y 字符串                     |
+| getWindowRect(hwnd, x/y/w/h)                                | 获取窗口位置     | 获取指定窗口几何坐标的值                                     |
+| getWindowFromPoint(x, y)                                    | 获取坐标所在窗口 | 获取屏幕上坐标为(x,y)的位置指向的最前面的窗口                |
 
 以获取时间为例：
 
 ```
 当前时间：%>time(yy-MM-dd hh:mm)%
 ```
+
+#### 
 
 ### 四则运算
 
@@ -1050,13 +1113,23 @@ tips：
 
 ### 多条弹幕
 
-使用 `\n` 来分割过长弹幕，则会分多条弹幕发送，每次延时1.5s。通过此方式支持**执行多条命令**。
+使用 `\n` 来分割过长弹幕，则会分多条弹幕发送，每次延时约1.5s。通过此方式支持**执行多条命令**。
 
 > 这是两个普通字符，并不是换行符。对于编程人员来说，相当于代码中两个反斜杠加字母n。
 
 受于B站后台的限制，多条弹幕将调整为每隔1.5秒发送一次，数量无上限。
 
+### 触发多段代码
+
+一个条件（定时、关键词、事件等）可以触发多段代码，在一段代码中也可以使用 `---` 拆分为多段：
+
+```markdown
+代码块1
 ---
+代码块2
+---
+代码块3
+```
 
 ### 发送选项
 
@@ -1065,6 +1138,7 @@ tips：
 - 冷却通道（cd）：控制弹幕发送频率
 - 等待通道（wait）：控制自己不连续发送弹幕
 - 强制房管权限（admin）：向普通观众的弹幕开放部分权限
+- 子账号（account）：选择要用作发送弹幕的子账号
 
 举个例子：
 
@@ -1079,7 +1153,7 @@ tips：
 这里以冷却通道为例：
 
 - 条件的方式：`[%cd20%>5]某弹幕`
-- 选项的方式：`(%cd20%:5)某弹幕`
+- 选项的方式：`(cd20:5)某弹幕`
 
 同样是判断冷却通道20号的时间有没有满5秒，当满5秒的时候，两者的行为是一致的，都将发送弹幕。
 
@@ -1106,7 +1180,7 @@ tips：
 
 当然，也可以作为手动点“发送”按钮的一项调整。
 
-### 冷却通道
+#### 冷却通道
 
 > `v2.9.0`版本新增
 
@@ -1130,7 +1204,7 @@ tips：
 
 > 注意：B站连续发送弹幕的冷却时间为1秒，与本程序的弹幕冷却系统无关。
 
-### 等待通道
+#### 等待通道
 
 针对指定某个通道的弹幕，机器人发送一条后，至少**等待他人的多少条弹幕**后才会重新发送这条弹幕；自己发送的弹幕不会包含在这“多少条弹幕”之后。
 
@@ -1166,6 +1240,31 @@ tips：
 
 至于 `(wait10:0)`，则只是标记这些弹幕的等待通道是 10，用于下一次的条件判断。
 
+#### 子账号选择
+
+通过“子账号”系统，可以使用不同的账号来发送弹幕。每个账号都有各自对应的序号，默认登录且绑定捐赠版的为**主账号**，**ID=0**，其余添加的子账号序号从1开始。
+
+> 注意：所有账号登录都有时效性，请注意更新或清理失效的账号。
+
+格式：`(account:参数)`，可以简写为`(ac:参数)`。其中参数可以是：
+
+| 参数                     | 说明                                 |
+| ------------------------ | ------------------------------------ |
+| `(ac:?)`                 | 在所有子账号中随机使用一个           |
+| `(ac:??)`                | 在主账号+所有子账号中随机使用一个    |
+| `(ac:序号)`              | 账号的序号，主账号是0，子账号从1开始 |
+| `(ac:开始序号-结束序号)` | 账号的序号范围，在其中随机使用一个   |
+| `(ac:UID)`               | 使用指定UID的账号                    |
+
+##### 示例：使用子账号
+
+```
+[%guard%=1]*(ac:1,cd10:5)欢迎舰长~
+欢迎观众~
+```
+
+
+
 ### 命令操作
 
 有一些自定义的命令，如 `>block(123456)`，如下：
@@ -1197,9 +1296,9 @@ tips：
 | execRemoteCommand(cmd)                             | 执行远程命令     | 执行远程控制（见下面）                                       |
 | execRemoteCommand(cmd, 0)                          | 执行远程命令     | 执行远程控制，不发送回馈通知                                 |
 | sendPrivateMsg(uid, msg)                           | 发送私信         | 向指定用户发送私信                                           |
-| sendRoomMsg(roomId, msg)                           | 发送直播间弹幕   | 向指定直播间发送弹幕                                         |
-| sendRoomEmoji(roomId, emojiId)                     | 发送直播间表情   | 向指定直播间发送表情                                         |
-| sendEmoji(emojiId)                                 | 发送表情         | 上面命令的省略房号版                                         |
+| sendRoomMsg(roomId, msg)                           | 发送直播间弹幕   | 向指定直播间发送弹幕（注意：该操作不参与发送的队列，频繁使用可能导致发送过快） |
+| sendRoomEmoji(roomId, emojiId)                     | 发送直播间表情   | 向指定直播间发送表情（注意：同上）                           |
+| sendEmoji(emojiId)                                 | 发送表情         | 上面命令的省略房号版（注意：同上）                           |
 | showScreenDanmu(text)                              | 显示全屏弹幕     | 将text作为本地全屏移动的弹幕显示，受相关设置影响，需打开“全屏弹幕” |
 | timerShot(msecond, msg)                            | 延迟发送         | 定时多少**毫秒**后发送弹幕msg（msg允许为另一命令，多个命令使用 `%m%` 分隔） |
 | localNotify(msg)                                   | 本地通知         | 发送本地消息通知（非弹幕，只有自己看得到）                   |
@@ -2875,11 +2974,8 @@ JSON 格式：
 - 触发事件：`/api/event?event=事件名&data=url编码(json)`，会触发指定事件如 `SEND_GIFT`。若使用 post 方式，data 部分可直接使用 json 来发送而不需要 url 编码。
 - 配置文件相关：（下列接口需要打开“解锁安全限制”开关）
 
-  - 获取所有配置：`/api/readConfig`，返回 `settings.ini` 文件内容。如果带有参数`format=json`则以JSON格式返回，否则返回纯INI文本；如果带有参数`key`则读取指定配置，否则返回全部配置
+  - 获取所有配置：`/api/readConfig`，返回 `settings.ini` 文件内容。如果带有参数`format=json`则以JSON格式返回，否则返回纯INI文本；如果带有参数`key`则读取指定配置，返回纯字符串
   - 设置单个值：`/api/setConfig?key=xxx&value=xxx&reload=1`，当`reload`不为空时自动重新加载所有配置
-    - 参数同时支持 GET 和 POST 方式，后者 `body` 中的值要为 raw，不要使用 `form-data`
-    - 支持 POST 的 body 使用 JSON 格式：`{"key": "xxx"}`
-    - 若是成功，返回 `{"code":0}`
   - 主程序重新加载所有配置：`/api/reloadConfig`
 
 
