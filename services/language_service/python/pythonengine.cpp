@@ -15,7 +15,9 @@ QString PythonEngine::runCode(const LiveDanmaku &danmaku, const QString& execNam
     ensureDirExist(tempDir);
     qint64 timestamp = QDateTime::currentSecsSinceEpoch();
     qint64 random = qrand();
-    QString pythonScriptPath = tempDir + "/script_" + QString::number(timestamp) + "_" + QString::number(random) + ".py";
+    // QString pythonScriptPath = tempDir + "/script_" + QString::number(timestamp) + "_" + QString::number(random) + ".py";
+    QString pythonScriptPath = rt->dataPath + "codes/pytmp_" + QString::number(timestamp) + "_" + QString::number(random) + ".py";
+    QString venvExePath = rt->dataPath + "codes/venv/bin/python";
     writeTextFile(pythonScriptPath, code);
 
     // 传递应用程序
@@ -54,10 +56,15 @@ QString PythonEngine::runCode(const LiveDanmaku &danmaku, const QString& execNam
 
     // 开始执行
     QString exeName = "python";
-    if (!execName.isEmpty())
+    if (!execName.isEmpty()) // 优先使用传入的exeName
     {
         exeName = execName;
     }
+    else if (isFileExist(venvExePath)) // 默认的venv
+    {
+        exeName = venvExePath;
+    }
+    qDebug() << "QProcess运行：" << exeName << arguments.first();
     process.start(exeName, arguments);
 
     watcher->deleteLater();
@@ -77,6 +84,7 @@ QString PythonEngine::runCode(const LiveDanmaku &danmaku, const QString& execNam
     // 读取输出
     QByteArray output = process.readAllStandardOutput();
     QByteArray error = process.readAllStandardError();
+    qDebug() << "Python运行输出：" << output;
 
     deleteFile(pythonScriptPath);
 

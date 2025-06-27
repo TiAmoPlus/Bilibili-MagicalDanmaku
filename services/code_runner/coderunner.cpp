@@ -11,9 +11,15 @@
 #include "fileutil.h"
 #include "ImageSimilarityUtil.h"
 #include "netutil.h"
+#include "signaltransfer.h"
 
 CodeRunner::CodeRunner(QObject *parent) : QObject(parent)
 {
+    // 全局替换
+    connect(st, &SignalTransfer::replaceDanmakuVariables, this, [=](QString* text, const LiveDanmaku& danmaku) {
+        *text = processDanmakuVariants(*text, danmaku);
+    });
+    
     // 等待通道
     for (int i = 0; i < CHANNEL_COUNT; i++)
         msgWaits[i] = WAIT_CHANNEL_MAX;
@@ -101,7 +107,7 @@ void CodeRunner::releaseData()
  * @param name URL、绝对路径、相对路径、文件名简写等等
  * @return 文件内容
  */
-QString CodeRunner::getCodeContentFromFile(QString name)
+QString CodeRunner::getCodeContentFromFile(QString name) const
 {
     /// 如果是 URL，网络文件
     if (name.startsWith("http://") || name.startsWith("https://"))
@@ -127,13 +133,19 @@ QString CodeRunner::getCodeContentFromFile(QString name)
     foreach (QString file, files)
     {
         if (file == name)
+        {
+            qDebug() << "读取默认目录下代码文件：" << name;
             return readTextFileAutoCodec(dir.absoluteFilePath(file));
+        }
     }
     // 再是不带后缀的
     foreach (QString file, files)
     {
         if (file.left(file.lastIndexOf(".")) == name)
+        {
+            qDebug() << "读取默认目录下简写代码文件：" << name;
             return readTextFileAutoCodec(dir.absoluteFilePath(file));
+        }
     }
     return readTextFileAutoCodec(name);
 }
@@ -162,65 +174,13 @@ bool CodeRunner::sendVariantMsg(QString msg, const LiveDanmaku &danmaku, int cha
         return hasSuccess;
     }
     
-    // 文件判断
-    if (msg.contains("<file:"))
+    // 编程语言或代码文件
+    bool ok;
+    msg = replaceCodeLanguage(msg, danmaku, &ok);
+    if (ok)
     {
-        QRegularExpression re("\\s*<\\s*file\\s*:\\s*(.*)\\s*>\\s*");
-        QRegularExpressionMatch match;
-        if (msg.contains(re, &match))
-        {
-            QString placeholder = match.captured(0);
-            QString name = match.captured(1); // 文件名/文件路径
-            qDebug() << "加载代码文件：" << name;
-            QString content = getCodeContentFromFile(name);
-            return sendVariantMsg(msg.replace(placeholder, content), danmaku, channel, manual, delayMine);
-        }
+        return sendVariantMsg(msg, danmaku, channel, manual, delayMine);
     }
-
-    // 判断是否是自定义编程语言
-    if (msg.startsWith("var:"))
-    {
-        QString code = msg.mid(4);
-        code = processDanmakuVariants(code, danmaku);
-        return sendVariantMsg(code, danmaku, channel, manual, delayMine);
-    }
-    else if (msg.startsWith("js:"))
-    {
-        QString code = msg.mid(3);
-        QString result = jsEngine->runCode(danmaku, code);
-        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
-    }
-    else if (msg.startsWith("javascript:"))
-    {
-        QString code = msg.mid(11);
-        QString result = jsEngine->runCode(danmaku, code);
-        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
-    }
-    else if (msg.startsWith("lua:"))
-    {
-        QString code = msg.mid(4);
-        QString result = luaEngine->runCode(danmaku, code);
-        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
-    }
-    else if (msg.startsWith("python:"))
-    {
-        QString code = msg.mid(7);
-        QString result = pythonEngine->runCode(danmaku, "python", code);
-        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
-    }
-    else if (msg.startsWith("python3:"))
-    {
-        QString code = msg.mid(8);
-        QString result = pythonEngine->runCode(danmaku, "python3", code);
-        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
-    }
-    else if (msg.startsWith("py:"))
-    {
-        QString code = msg.mid(3);
-        QString result = pythonEngine->runCode(danmaku, "python", code);
-        return sendVariantMsg(result, danmaku, channel, manual, delayMine);
-    }
-    
     
     // 解析变量、条件
     QStringList msgs = getEditConditionStringList(msg, danmaku);
@@ -719,6 +679,69 @@ QString CodeRunner::processTimeVariants(QString msg) const
     return msg;
 }
 
+QString CodeRunner::replaceCodeLanguage(QString code, const LiveDanmaku& danmaku, bool *ok)
+{
+    QString msg = code;
+    *ok = true;
+
+    // 文件判断
+    if (msg.contains("<file:"))
+    {
+        QRegularExpression re("\\s*<\\s*file\\s*:\\s*(.*)\\s*>\\s*");
+        QRegularExpressionMatch match;
+        if (msg.contains(re, &match))
+        {
+            QString placeholder = match.captured(0);
+            QString name = match.captured(1); // 文件名/文件路径
+            qDebug() << "加载代码文件：" << name;
+            QString content = getCodeContentFromFile(name);
+            msg = msg.replace(placeholder, content);
+            return msg;
+        }
+    }
+
+    // 判断是否是自定义编程语言
+    QRegularExpressionMatch match;
+    if (msg.contains(QRegularExpression("^\\s*var:\\s*", QRegularExpression::CaseInsensitiveOption), &match)) // 替换变量
+    {
+        QString code = msg.mid(match.capturedLength());
+        code = processDanmakuVariants(code, danmaku);
+        return code;
+    }
+    else if (msg.contains(QRegularExpression("^\\s*(js|javascript):\\s*", QRegularExpression::CaseInsensitiveOption), &match))
+    {
+        QString code = msg.mid(match.capturedLength());
+        QString result = jsEngine->runCode(danmaku, code);
+        return result;
+    }
+    else if (msg.contains(QRegularExpression("^\\s*lua:\\s*", QRegularExpression::CaseInsensitiveOption), &match))
+    {
+        QString code = msg.mid(match.capturedLength());
+        QString result = luaEngine->runCode(danmaku, code);
+        return result;
+    }
+    else if (msg.contains(QRegularExpression("^\\s*(python|python3|py|py3):\\s*", QRegularExpression::CaseInsensitiveOption), &match))
+    {
+        QString exeName = match.captured(1);
+        if (exeName == "py") exeName = "python";
+        else if (exeName == "py3") exeName = "python3";
+        QString code = msg.mid(match.capturedLength());
+        QString result = pythonEngine->runCode(danmaku, exeName, code);
+        return result;
+    }
+    else if (msg.contains(QRegularExpression("^\\s*exec:(.+?):\\s*", QRegularExpression::CaseInsensitiveOption), &match))
+    {
+        QString exePath = match.captured(1);
+        exePath.replace("<codes>", rt->dataPath + "codes");
+        QString code = msg.mid(match.capturedLength());
+        QString result = pythonEngine->runCode(danmaku, exePath, code);
+        return result;
+    }
+
+    *ok = false;
+    return msg;
+}
+
 /**
  * 获取可以发送的代码的列表
  * @param plainText 为替换变量的纯文本，允许使用\\n分隔的单行
@@ -989,7 +1012,7 @@ QString CodeRunner::processDanmakuVariants(QString msg, const LiveDanmaku& danma
     return msg;
 }
 
-QString CodeRunner::replaceDanmakuVariants(const LiveDanmaku& danmaku, const QString &key, bool *ok) const
+QString CodeRunner::replaceDanmakuVariants(const LiveDanmaku& danmaku, const QString &key, bool *ok)
 {
     *ok = true;
     QRegularExpressionMatch match;
@@ -1421,6 +1444,8 @@ QString CodeRunner::replaceDanmakuVariants(const LiveDanmaku& danmaku, const QSt
         return ac->roomId;
     else if (key == "%room_name%" || key == "%room_title%")
         return toSingleLine(ac->roomTitle);
+    else if (key == "%room_desc%")
+        return toSingleLine(ac->roomDescription);
 //        return ac->roomTitle;
     else if (key == "%up_name%" || key == "%up_uname%")
         return ac->upName;
@@ -1608,7 +1633,7 @@ QString CodeRunner::replaceDanmakuVariants(const LiveDanmaku& danmaku, const QSt
     }
 }
 
-QString CodeRunner::generateCodeFunctions(const QString &funcName, const QString &args, const LiveDanmaku &danmaku, bool *ok)
+QString CodeRunner::generateCodeFunctions(const QString &funcName, const QString &args, const LiveDanmaku &danmaku, bool *ok) const
 {
     if (funcName == "traverseJson")
     {
@@ -1746,9 +1771,10 @@ QString CodeRunner::replaceDanmakuJson(const QString &keySeq, const QJsonObject 
  */
 QString CodeRunner::traverseJsonCode(const QString &keySeq, const QString &code, const QJsonObject &json) const
 {
-    qDebug() << "遍历JSON：" << keySeq << code;
     // 解析JSON
     QJsonValue jv = getJsonValueByKeySeq(keySeq, json);
+    if (!jv.isNull())
+        qDebug() << "遍历JSON：" << keySeq << code;
     QStringList codes;
     if (jv.isArray())
     {
@@ -2736,7 +2762,7 @@ bool CodeRunner::isConditionTrue(T a, T b, QString op) const
 
 bool CodeRunner::isFilterRejected(QString filterName, const LiveDanmaku &danmaku)
 {
-    if (!enableFilter)
+    if (!enableFilter || rt->justStart)
         return false;
 
     qDebug() << "触发过滤器：" << filterName;
@@ -2754,7 +2780,10 @@ bool CodeRunner::isFilterRejected(QString filterName, const LiveDanmaku &danmaku
             QString filterCode = eventWidget->body();
             // 判断事件
             if (!processFilter(filterCode, danmaku))
+            {
+                qDebug() << "已过滤，代码：" << filterCode.left(20) + "...";
                 reject = true;
+            }
         }
     }
 
@@ -2767,7 +2796,14 @@ bool CodeRunner::isFilterRejected(QString filterName, const LiveDanmaku &danmaku
 bool CodeRunner::processFilter(QString filterCode, const LiveDanmaku &danmaku)
 {
     if (filterCode.isEmpty())
-        return false;
+        return true;
+
+    bool ok = false;
+    filterCode = replaceCodeLanguage(filterCode, danmaku, &ok);
+    if (ok)
+    {
+        return processFilter(filterCode, danmaku);
+    }
 
     // 获取符合的所有结果
     QStringList msgs = getEditConditionStringList(filterCode, danmaku);
@@ -2777,7 +2813,6 @@ bool CodeRunner::processFilter(QString filterCode, const LiveDanmaku &danmaku)
     // 如果有多个，随机取一个
     int r = qrand() % msgs.size();
     QString s = msgs.at(r);
-    qDebug() << "过滤器随机：" << msgs << r << s;
     bool reject = s.contains(QRegularExpression(">\\s*reject\\s*(\\s*)"));
     if (reject)
         qInfo() << "已过滤:" << filterCode;

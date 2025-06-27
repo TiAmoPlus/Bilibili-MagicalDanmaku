@@ -2561,12 +2561,6 @@ tips：
 | LIVE_RECORD_SAVED     | 录播结束，`%file_path%` 获取视频文件的绝对路径，`%file_name%` 获取文件名（不包含后缀） |
 | LIVE_RECORD_FORMATTED | 开启“保存为mp4”后，转换格式成功时触发此事件，`%file_path%` `%file_name%` 获取信息    |
 
-#### 全局快捷键
-
-事件中，以 `KEY:` 开头，则会自动注册全局快捷键，例如 `KEY:ctrl+1`，则是注册快捷键 `ctrl+1`，全局皆有效。此时任意地方按下 `ctrl+1` 就会执行这个事件里面的代码。
-
-> 注：受限于 B 站弹幕发送必须有间隔（2秒），代码会有延迟，不一定是立即执行
-
 #### 警告事件
 
 | 事件命令      | 说明                                                     |
@@ -2659,6 +2653,39 @@ tips：
 访问 `localhost:5520/squat.html`（域名端口按照设置的来），显示 `蹲起数量：0`。
 
 每次点事件中“蹲起数量+1”那一项的“**发送**”按钮，对应蹲起数量加一。
+
+#### 全局快捷键事件
+
+事件中，以 `KEY:` 开头，则会自动注册全局快捷键，例如 `KEY:ctrl+1`，则是注册快捷键 `ctrl+1`，全局皆有效。此时任意地方按下 `ctrl+1` 就会执行这个事件里面的代码。
+
+> 注：受限于 B 站弹幕发送必须有间隔（2秒），代码会有延迟，不一定是立即执行
+
+#### Cron 定时事件
+
+事件使用 `TIME:` 开头，后面使用 Cron 表达式，即可以实现按具体时间的定时或者间隔操作。
+
+本程序实现了支持标准的 6 字段 Cron 表达式：
+
+```
+秒 分 时 日 月 周
+```
+
+支持的功能包括：
+
+- 通配符 `*`
+- 范围 `1-5`
+- 步长 `*/5` 或 `1-30/5`
+- 列表 `1,3,5`
+- 组合 `1-5,10-15/2`
+
+常用示例：
+
+- `0 0 * * * *` - 每小时开始执行
+- `*/10 * * * * *` - 每10秒执行
+- `0 0 8-10 * * *` - 每天8、9、10点执行
+- `0 0/30 8-10 * * *` - 每天8:00, 8:30, 9:00, 9:30, 10:00执行
+
+
 
 ---
 
@@ -3130,7 +3157,35 @@ heaps.write("test", "222")
 console.log(heaps.read("test"))
 ```
 
+##### 网络连接
 
+由于嵌入的 JS 引擎并不支持许多原生 JS 模块，网络连接与原生 JS 略有不同。
+
+```JS
+// GET 请求
+let response = get("https://api.example.com/data");
+
+// POST 请求
+let response = post("https://api.example.com/submit", JSON.stringify({key: "value"}));
+
+// 使用 fetch 进行更复杂的请求
+let response = fetch("https://api.example.com/data", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({key: "value"})
+});
+```
+
+示例：获取直播间标题
+
+```js
+js:
+let response = get("https://api.live.bilibili.com/room/v1/Room/get_info?room_id=1");
+let data = JSON.parse(response);
+console.log(data.data.title)
+```
 
 #### Lua语言
 
@@ -3194,6 +3249,8 @@ end
 ```
 
 > `应用数据路径` 如果是绿色版，那么就是安装路径；如果是单文件版，那么按照系统设置会不同。
+>
+> 默认全局python不支持第三方库，例如网络库requests，请参考下方虚拟环境。
 
 ##### Python示例
 
@@ -3289,7 +3346,48 @@ except configparser.Error as e:
     print(f"Error Settings INI file: {e}")
 ```
 
+##### 使用Python虚拟环境
 
+通过Python的虚拟环境，可以为插件安装单独版本的第三方库，与其他项目不冲突。
+
+```
+cd [神奇弹幕的codes文件夹]
+
+# 创建虚拟环境
+python -m venv venv
+
+# 2. 激活虚拟环境
+# Windows:
+venv\scripts\activate
+# Linux/macOS:
+source venv/bin/activate
+
+# 3. 在虚拟环境中安装包
+pip install package-name
+
+# 4. 退出虚拟环境
+deactivate
+```
+
+##### 指定命令行exe
+
+支持使用命令行运行的程序，调用形式如 `python [文件路径]` 这样的命令（暂不支持带其他参数）。
+
+使用语法规则 `exec:[exe路径]:` 开头来指定要调用的命令，以指定虚拟环境的 Python 为例（Mac上）：
+
+```python
+exec:/Users/iwxyi/Library/Application Support/LanYiXi/神奇弹幕/codes/venv/bin/python:
+import sys
+print(">localNotify(111111)")
+```
+
+由于路径过长，以及给大家确定一个通用路径，添加了统一的变量替换 `<codes>` 来指定为 `数据路径/codes` 文件夹，例如上述代码可以写为：
+
+```python
+exec:<codes>/venv/bin/python:
+import sys
+print(">localNotify(111111)")
+```
 
 #### 从代码文件导入
 
