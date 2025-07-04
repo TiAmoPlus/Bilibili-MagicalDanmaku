@@ -8,6 +8,8 @@
 #include <QJsonObject>
 #include <QDebug>
 
+typedef QString UIDT;
+
 enum MessageType
 {
     MSG_DEF,
@@ -33,16 +35,18 @@ public:
     explicit LiveDanmaku() : msgType(MSG_DEF)
     {}
 
-    explicit LiveDanmaku(qint64 uid) : msgType(MSG_MSG), uid(uid)
+    LiveDanmaku(qint64 uid, QString nickname, QString text)
+        : LiveDanmaku(QString::number(uid), nickname, text)
     {}
 
-    LiveDanmaku(qint64 uid, QString text) : msgType(MSG_MSG), uid(uid), text(text)
-    {}
-
-    LiveDanmaku(qint64 uid, QString nickname, QString text) : msgType(MSG_MSG), uid(uid), nickname(nickname), text(text)
+    LiveDanmaku(UIDT uid, QString nickname, QString text) : msgType(MSG_MSG), uid(uid), nickname(nickname), text(text)
     {}
 
     LiveDanmaku(QString nickname, QString text, qint64 uid, int level, QDateTime time, QString unameColor, QString textColor)
+        : LiveDanmaku(nickname, text, QString::number(uid), level, time, unameColor, textColor)
+    {}
+
+    LiveDanmaku(QString nickname, QString text, UIDT uid, int level, QDateTime time, QString unameColor, QString textColor)
         : msgType(MSG_DANMAKU), nickname(nickname), text(text), uid(uid), level(level), timeline(time),
           uname_color(unameColor), text_color(textColor)
     {
@@ -50,6 +54,10 @@ public:
     }
 
     LiveDanmaku(QString nickname, int giftId, QString gift, int num, qint64 uid, QDateTime time, QString coinType, qint64 totalCoin)
+        : LiveDanmaku(nickname, giftId, gift, num, QString::number(uid), time, coinType, totalCoin)
+    {}
+
+    LiveDanmaku(QString nickname, int giftId, QString gift, int num, UIDT uid, QDateTime time, QString coinType, qint64 totalCoin)
         : msgType(MSG_GIFT), nickname(nickname), giftId(giftId), giftName(gift), number(num), uid(uid), timeline(time),
           coin_type(coinType), total_coin(totalCoin)
     {
@@ -57,24 +65,41 @@ public:
     }
 
     LiveDanmaku(QString nickname, qint64 uid, QDateTime time, bool admin, QString unameColor, QString spreadDesc, QString spreadInfo)
+        : LiveDanmaku(nickname, QString::number(uid), time, admin, unameColor, spreadDesc, spreadInfo)
+    {}
+
+    LiveDanmaku(QString nickname, UIDT uid, QDateTime time, bool admin, QString unameColor, QString spreadDesc, QString spreadInfo)
         : msgType(MSG_WELCOME), nickname(nickname), uid(uid), timeline(time), admin(admin),
           uname_color(unameColor), spread_desc(spreadDesc), spread_info(spreadInfo)
     {
 
     }
+
     LiveDanmaku(int guard, QString nickname, qint64 uid, QDateTime time)
+        : LiveDanmaku(guard, nickname, QString::number(uid), time)
+    {}
+
+    LiveDanmaku(int guard, QString nickname, UIDT uid, QDateTime time)
         : msgType(MSG_WELCOME_GUARD), guard(guard), nickname(nickname), uid(uid), timeline(time)
     {
 
     }
 
     LiveDanmaku(QString nickname, qint64 uid, QString song, QDateTime time)
+        : LiveDanmaku(nickname, QString::number(uid), song, time)
+    {}
+
+    LiveDanmaku(QString nickname, UIDT uid, QString song, QDateTime time)
         : msgType(MSG_DIANGE), nickname(nickname), uid(uid), text(song), timeline(time)
     {
 
     }
 
     LiveDanmaku(QString nickname, qint64 uid, QString gift, int num, int guard, int gift_id, qint64 price, int first)
+        : LiveDanmaku(nickname, QString::number(uid), gift, num, guard, gift_id, price, first)
+    {}
+
+    LiveDanmaku(QString nickname, UIDT uid, QString gift, int num, int guard, int gift_id, qint64 price, int first)
         : msgType(MSG_GUARD_BUY), nickname(nickname), uid(uid), giftName(gift), number(num), timeline(QDateTime::currentDateTime()),
           giftId(gift_id), guard(guard), coin_type("gold"), total_coin(price), first(first)
     {
@@ -91,14 +116,14 @@ public:
     }
 
     /// 关注（粉丝）
-    LiveDanmaku(QString nickname, qint64 uid, bool attention, QDateTime time)
+    LiveDanmaku(QString nickname, UIDT uid, bool attention, QDateTime time)
         : msgType(MSG_ATTENTION), nickname(nickname), uid(uid), prev_timestamp(time.toSecsSinceEpoch()),
         timeline(QDateTime::currentDateTime()), attention(attention)
     {
 
     }
 
-    LiveDanmaku(QString nickname, qint64 uid)
+    LiveDanmaku(QString nickname, UIDT uid)
         : msgType(MSG_BLOCK), nickname(nickname), uid(uid), timeline(QDateTime::currentDateTime())
     {
 
@@ -110,12 +135,12 @@ public:
 
     }
 
-    LiveDanmaku(QString uname, qint64 uid, int win, qint64 votes)
+    LiveDanmaku(QString uname, UIDT uid, int win, qint64 votes)
         : msgType(MSG_PK_BEST), nickname(uname), uid(uid), level(win), total_coin(votes)
     {
     }
 
-    LiveDanmaku(QString nickname, QString text, qint64 uid, int level, QDateTime time, QString unameColor, QString textColor,
+    LiveDanmaku(QString nickname, QString text, UIDT uid, int level, QDateTime time, QString unameColor, QString textColor,
                 int giftId, QString gift, int num, int price)
         : msgType(MSG_SUPER_CHAT), nickname(nickname), text(text), uid(uid), level(level), timeline(time),
           uname_color(unameColor), text_color(textColor), giftId(giftId), giftName(gift), number(num),
@@ -133,7 +158,10 @@ public:
     {
         LiveDanmaku danmaku;
         danmaku.text = object.value("text").toString();
-        danmaku.uid = static_cast<qint64>(object.value("uid").toDouble());
+        if (object.value("uid").isString())
+            danmaku.uid = object.value("uid").toString();
+        else
+            danmaku.uid = QString::number(static_cast<qint64>(object.value("uid").toDouble()));
         danmaku.nickname = object.value("nickname").toString();
         danmaku.uname_color = object.value("uname_color").toString();
         danmaku.text_color = object.value("text_color").toString();
@@ -191,6 +219,7 @@ public:
         danmaku.reply_is_mystery = object.value("reply_is_mystery").toBool();
         danmaku.reply_type_enum = object.value("reply_type_enum").toInt();
         danmaku.wealth_level = object.value("honor_level").toInt();
+        danmaku.fromRoomId = object.value("from_room_id").toString();
         return danmaku;
     }
 
@@ -310,6 +339,10 @@ public:
         if (wealth_level > 0)
         {
             object.insert("honor_level", wealth_level);
+        }
+        if (!fromRoomId.isEmpty())
+        {
+            object.insert("from_room_id", fromRoomId);
         }
         return object;
     }
@@ -457,6 +490,11 @@ public:
 
     void setUid(qint64 uid)
     {
+        this->uid = QString::number(uid);
+    }
+
+    void setUid(UIDT uid)
+    {
         this->uid = uid;
     }
 
@@ -599,12 +637,17 @@ public:
         this->sub_account = sub;
     }
 
+    void setOriginalGiftName(QString name)
+    {
+        this->original_gift_name = name;
+    }
+
     QString getText() const
     {
         return text;
     }
 
-    qint64 getUid() const
+    UIDT getUid() const
     {
         return uid;
     }
@@ -874,15 +917,15 @@ public:
         return *this;
     }
 
-    LiveDanmaku& withRoomId(QString roomId)
+    LiveDanmaku& setFromRoomId(QString roomId)
     {
-        this->roomId = roomId;
+        this->fromRoomId = roomId;
         return *this;
     }
 
     QString getRoomId() const
     {
-        return roomId;
+        return fromRoomId;
     }
 
     LiveDanmaku& withRetry(int r = 1)
@@ -946,11 +989,21 @@ public:
         return sub_account;
     }
 
+    QString getOriginalGiftName() const
+    {
+        return original_gift_name;
+    }
+
+    QString getFromRoomId() const
+    {
+        return fromRoomId;
+    }
+
 protected:
     MessageType msgType = MSG_DANMAKU;
 
     QString text;
-    qint64 uid = 0; // 用户ID
+    UIDT uid = 0; // 用户ID
     QString nickname;
     QString uname_color; // 没有的话是空的
     QString text_color; // 没有的话是空的
@@ -988,6 +1041,7 @@ protected:
     QString coin_type;
     qint64 total_coin = 0;
     qint64 discount_price = 0;
+    QString original_gift_name;
 
     QString spread_desc; // 星光推广
     QString spread_info; // 颜色
@@ -1008,7 +1062,7 @@ protected:
     int first = 0; // 初次：1；新的：2；礼物合并：>0
     int special = 0;
 
-    QString roomId;
+    QString fromRoomId;
     int retry = 0;
     QString ai_reply;
 

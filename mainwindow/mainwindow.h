@@ -99,7 +99,7 @@ public:
     struct Diange
     {
         QString nickname;
-        qint64 uid;
+        UIDT uid;
         QString name;
         QDateTime time;
     };
@@ -112,7 +112,6 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     void changeEvent (QEvent * event) override;
     void paintEvent(QPaintEvent * event) override;
-    void test();
 
 signals:
     void signalRoomChanged(QString roomId);
@@ -196,11 +195,11 @@ private slots:
 
     void showDiangeHistory();
 
-    void eternalBlockUser(qint64 uid, QString uname, QString msg);
-    void cancelEternalBlockUser(qint64 uid);
-    void cancelEternalBlockUser(qint64 uid, qint64 roomId);
-    void cancelEternalBlockUserAndUnblock(qint64 uid);
-    void cancelEternalBlockUserAndUnblock(qint64 uid, qint64 roomId);
+    void eternalBlockUser(UIDT uid, QString uname, QString msg);
+    void cancelEternalBlockUser(UIDT uid);
+    void cancelEternalBlockUser(UIDT uid, qint64 roomId);
+    void cancelEternalBlockUserAndUnblock(UIDT uid);
+    void cancelEternalBlockUserAndUnblock(UIDT uid, qint64 roomId);
     void saveEternalBlockUsers();
     void detectEternalBlockUsers();
 
@@ -720,9 +719,19 @@ private slots:
 
     void on_emailFromEdit_editingFinished();
 
-    void on_chatGPTEndpointEdit_textEdited(const QString &arg1);
-
     void on_emailPasswordEdit_editingFinished();
+
+    void on_proxyTypeCombo_activated(const QString &arg1);
+
+    void on_proxyHostEdit_editingFinished();
+
+    void on_proxyPortSpin_editingFinished();
+
+    void on_proxyUsernameEdit_editingFinished();
+
+    void on_proxyPasswordEdit_editingFinished();
+
+    void on_chatGPTEndpointEdit_textEdited(const QString &arg1);
 
     void on_fansArchivesCheck_clicked();
 
@@ -750,6 +759,8 @@ private slots:
 
     void on_subAccountTableWidget_customContextMenuRequested(const QPoint &pos);
 
+    void on_proxyTestIPButton_clicked();
+
 private:
     void initView();
     void initStyle();
@@ -770,7 +781,7 @@ private:
 
     void oldLiveDanmakuRemoved(const LiveDanmaku &danmaku);
     void localNotify(const QString &text);
-    void localNotify(const QString &text, qint64 uid);
+    void localNotify(const QString &text, UIDT uid);
 
     TaskWidget *addTimerTask(bool enable, int second, QString text, int index = -1);
     TaskWidget *addTimerTask(const MyJson &json);
@@ -909,6 +920,8 @@ private:
     void showSqlQueryResult(QString sql);
 
     void sendEmail(const QString& to, const QString& subject, const QString& body);
+
+    void setNetworkProxy();
 
     void initFansArchivesService();
     void updateFansArchivesListView();
