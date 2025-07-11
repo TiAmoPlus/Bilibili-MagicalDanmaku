@@ -626,7 +626,9 @@ void MainWindow::initObject()
     }
 
     us = new UserSettings(rt->dataPath + "settings.ini");
-    cr->setHeaps(new MySettings(rt->dataPath + "heaps.ini", QSettings::Format::IniFormat));
+    MySettings* heaps_settings = new MySettings(rt->dataPath + "heaps.ini", QSettings::Format::IniFormat);
+    heaps_settings->setIniCodec(QTextCodec::codecForName("utf-8"));
+    cr->setHeaps(heaps_settings);
     cr->extSettings = new MySettings(rt->dataPath + "ext_settings.ini", QSettings::Format::IniFormat);
 
     // 版本
@@ -5167,8 +5169,9 @@ void MainWindow::setRoomThemeByCover(double val)
     ui->menubar->setStyleSheet("QMenuBar:item{background:transparent;}QMenuBar{background:transparent; color:"+QVariant(fg).toString()+"}");
     roomIdBgWidget->setStyleSheet("#roomIdBgWidget{ background: " + QVariant(themeSbg).toString() + "; border-radius: " + snum(roomIdBgWidget->height()/2) + "px; }");
     sideButtonList.at(ui->stackedWidget->currentIndex())->setNormalColor(sbg);
-    ui->tagsButtonGroup->setMouseColor([=]{QColor c = themeSbg; c.setAlpha(127); return c;}(),
-                                       [=]{QColor c = themeSbg; c.setAlpha(255); return c;}());
+//    ui->tagsButtonGroup->setMouseColor([=]{QColor c = themeSbg; c.setAlpha(127); return c;}(),
+//                                       [=]{QColor c = themeSbg; c.setAlpha(255); return c;}());
+
     thankTabButtons.at(ui->thankStackedWidget->currentIndex())->setNormalColor(sbg);
     thankTabButtons.at(ui->thankStackedWidget->currentIndex())->setTextColor(sfg);
     dataCenterTabButtons.at(ui->dataCenterStackedWidget->currentIndex())->setNormalColor(sbg);
@@ -10884,9 +10887,9 @@ void MainWindow::on_actionShow_Gift_List_triggered()
     view->setWindowTitle("当前直播间的礼物");
 
     // 读取数据
-    model->setColumnCount(4);
+    model->setColumnCount(5);
     model->setRowCount(pl->allGiftMap.size());
-    model->setHorizontalHeaderLabels({"ID", "名称", "价格", "描述"});
+    model->setHorizontalHeaderLabels({"ID", "名称", "价格", "描述", "礼物图片url"});
     QColor goldColor("#CD7F32");
     QColor silverColor("#C0C0C0");
     int row = 0;
@@ -10905,6 +10908,7 @@ void MainWindow::on_actionShow_Gift_List_triggered()
             model->setItem(row, 2, item);
         }
         model->setItem(row, 3, new QStandardItem(info.extraJson.value("desc").toString()));
+        model->setItem(row, 4, new QStandardItem(info.getFaceUrl()));
         row++;
     }
 

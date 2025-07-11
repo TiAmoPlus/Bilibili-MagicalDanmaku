@@ -1,0 +1,11 @@
+prefix=D:/protobuf_test/protobuf_3.x.x/protobuf_3.9.0_install
+exec_prefix=D:/protobuf_test/protobuf_3.x.x/protobuf_3.9.0_install
+libdir=D:/protobuf_test/protobuf_3.x.x/protobuf_3.9.0_install/lib
+includedir=D:/protobuf_test/protobuf_3.x.x/protobuf_3.9.0_install/include
+
+Name: Protocol Buffers
+Description: Google's Data Interchange Format
+Version: 3.9.0.0
+Libs: -L${libdir} -lprotobuf 
+Cflags: -I${includedir} 
+Conflicts: protobuf-lite

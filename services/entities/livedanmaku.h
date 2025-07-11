@@ -642,6 +642,11 @@ public:
         this->original_gift_name = name;
     }
 
+    void setUnameColor(QString uname_color)
+    {
+        this->uname_color = uname_color;
+    }
+
     QString getText() const
     {
         return text;

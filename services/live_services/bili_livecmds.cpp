@@ -1,3 +1,6 @@
+// 这个也只能放在前面？？
+#include "interact_word_v2.pb.h"
+#include "google/protobuf/util/json_util.h"
 #include "bili_liveservice.h"
 #include "utils/bili_api_util.h"
 #include "coderunner.h"
@@ -1527,61 +1530,61 @@ void BiliLiveService::handleMessage(QJsonObject json)
         QJsonObject data = json.value("data").toObject();
         UIDT uid = snum(static_cast<qint64>(data.value("uid").toDouble()));
         QString copy_writing = data.value("copy_writing").toString();
+        qInfo() << "高能榜进入：" << copy_writing;
         QStringList results = QRegularExpression("欢迎(舰长|提督|总督)?.+?<%(.+)%>").match(copy_writing).capturedTexts();
+        const QJsonObject& data_uinfo = data["uinfo"].toObject();
+        const QJsonObject& data_uinfo_wealth = data_uinfo["wealth"].toObject();
+        const QJsonObject& data_uinfo_base = data_uinfo["base"].toObject();
+        const QJsonObject& data_uinfo_base_guard = data_uinfo_base["guard"].toObject();
+        const QJsonObject& data_uinfo_base_medal = data_uinfo_base["medal"].toObject();
+        qint64 trigger_time = static_cast<qint64>(data.value("trigger_time").toDouble());
+        qint64 timestamp = trigger_time / 1000000000;
+        QString unameColor = data_uinfo_base["name_color_str"].toString();
+        const QJsonObject& data_uinfo_medal = data_uinfo["medal"].toObject();
+        qint32 guard_level = data_uinfo_base_guard["level"].toInt();
+        QString uname = data_uinfo_base["name"].toString();
+        qint32 wealthy_level = data_uinfo_wealth["level"].toInt();
+        QString localName = us->getLocalNickname(uid);
+        // 先尝试 能不能在高能榜上获取到这个用户.
         LiveDanmaku danmaku;
-        if (results.size() < 2 || results.at(1).isEmpty()) // 不是船员
+
+
+        danmaku.setWealthLevel(wealthy_level);
+        for (int i = 0; i < onlineGoldRank.size(); i++)
         {
-            qInfo() << "高能榜进入：" << copy_writing;
-            QStringList results = QRegularExpression("^欢迎(尊享用户)?\\s*<%(.+)%>").match(copy_writing).capturedTexts();
-            if (results.size() < 2)
+            if (onlineGoldRank.at(i).getUid() == uid)
             {
-                // qWarning() << "识别舰长进入失败：" << copy_writing;
-                // qWarning() << data;
-                return ;
+                danmaku = onlineGoldRank.at(i); // 就是这个用户了
+                break;
             }
-
-            // 高能榜上的用户
-            for (int i = 0; i < onlineGoldRank.size(); i++)
-            {
-                if (onlineGoldRank.at(i).getUid() == uid)
-                {
-                    danmaku = onlineGoldRank.at(i); // 就是这个用户了
-                    danmaku.setTime(QDateTime::currentDateTime());
-                    qInfo() << "                guard:" << danmaku.getGuard();
-                    break;
-                }
-            }
-            if (danmaku.getUid() == 0)
-            {
-                // qWarning() << "未在已有高能榜上找到，立即更新高能榜";
-                // updateOnlineGoldRank();
-                return ;
-            }
-
-            // 高能榜的，不能有guard，不然会误判为牌子
-            // danmaku.setGuardLevel(0);
         }
-        else // 舰长进入
+        // 如果找到了 其他数据就继续用保存的高能榜数据，但是这里是可以更新到新的数据的。比如昵称之类的。
+        danmaku.setGuardLevel(guard_level);
+        danmaku.setNickname(uname);
+        danmaku.setUid(uid);
+        danmaku.setTime(QDateTime::fromSecsSinceEpoch(timestamp));
+        danmaku.setUnameColor(unameColor);
+        danmaku.setWealthLevel(wealthy_level);
+        danmaku.setMedal("0",data_uinfo_base_medal.value("name").toString(),
+            data_uinfo_base_medal.value("level").toInt(),
+            QString("#%1").arg(data_uinfo_base_medal.value("color").toInt(), 6, 16,
+                QLatin1Char('0')), "");
+        // userComeEvent(danmaku); // 用户进入就有提示了（舰长提示会更频繁）
+        // 临时解决方案
+        QString medal_ruid = "0";
+        if (data_uinfo["medal"].isObject())
         {
-            qInfo() << ">>>>>>舰长进入：" << copy_writing;
-
-            QString gd = results.at(1);
-            QString uname = results.at(2); // 这个昵称会被系统自动省略（太长后面会是两个点）
-            if (ac->currentGuards.contains(uid))
-                uname = ac->currentGuards[uid];
-            int guardLevel = 0;
-            if (gd == "总督")
-                guardLevel = 1;
-            else if (gd == "提督")
-                guardLevel = 2;
-            else if (gd == "舰长")
-                guardLevel = 3;
-
-            danmaku = LiveDanmaku(guardLevel, uname, uid, QDateTime::currentDateTime());
+            medal_ruid = data_uinfo["medal"].toObject()["ruid"].toString();
         }
+        bool opposite = pking &&
+                ((oppositeAudience.contains(uid) && !myAudience.contains(uid))
+                 || (!pkRoomId.isEmpty() &&
+                    (medal_ruid != 0 ) &&
+                     medal_ruid == pkRoomInfo.extraJson["room_info"].toObject()["uid"].toString()));
+        danmaku.setOpposite(opposite);
         danmaku.setFromRoomId(pkRoomId);
 
-        // userComeEvent(danmaku); // 用户进入就有提示了（舰长提示会更频繁）
+        // receiveUserCome(danmaku);
         triggerCmdEvent(cmd, danmaku.with(data));
     }
     else if (cmd == "WELCOME") // 欢迎老爷，通过vip和svip区分月费和年费老爷
@@ -1594,6 +1597,126 @@ void BiliLiveService::handleMessage(QJsonObject json)
         qInfo() << s8("欢迎观众：") << username << isAdmin;
 
         triggerCmdEvent(cmd, LiveDanmaku().with(data));
+    }
+    else if (cmd == "INTERACT_WORD_V2")
+    {
+        QJsonObject data = json.value("data").toObject();
+        QString pb_base64 = data["pb"].toString();
+        QByteArray pb_bytes = QByteArray::fromBase64(pb_base64.toUtf8());
+        interact_word_v2::InteractWordV2 interact_word_v2_data;
+        interact_word_v2_data.ParseFromArray(pb_bytes, pb_bytes.size());
+        qint32 msgType = interact_word_v2_data.msg_type();
+
+        UIDT uid = snum(static_cast<qint64>(interact_word_v2_data.uid()));
+        QString username = QString::fromStdString(interact_word_v2_data.uname());
+        qint64 timestamp = interact_word_v2_data.timestamp();
+        // bool isadmin = data.value("isadmin").toBool(); // TODO:这里没法判断房管？
+        bool isadmin = false; // TODO:这里没法判断房管？
+        QString unameColor = QString::fromStdString(interact_word_v2_data.mutable_uinfo()->mutable_base()->name_color_str());
+        bool isSpread = interact_word_v2_data.is_spread();
+        QString spreadDesc = QString::fromStdString(interact_word_v2_data.spread_desc());
+        QString spreadInfo = QString::fromStdString(interact_word_v2_data.spread_info());;
+
+        interact_word_v2::InteractWordV2_FansMedalInfo fansMedal = interact_word_v2_data.fans_medal();
+        QString medal_name = QString::fromStdString(fansMedal.medal_name());
+        qint32 medal_level = fansMedal.medal_level();
+        qint64 medal_color = fansMedal.medal_color();
+        qint64 anchor_roomid = fansMedal.anchor_roomid();
+
+        QString roomId = snum(interact_word_v2_data.roomid());
+        interact_word_v2::InteractWordV2_UserInfo uinfo = interact_word_v2_data.uinfo();
+        interact_word_v2::InteractWordV2_UserInfo_Wealth wealthy = uinfo.wealthy();
+        int wealth_level = wealthy.level();
+
+        qInfo() << s8("观众交互：") << username << msgType;
+        QString localName = us->getLocalNickname(uid);
+        LiveDanmaku danmaku(username, uid, QDateTime::fromSecsSinceEpoch(timestamp), isadmin,
+                                    unameColor, spreadDesc, spreadInfo);
+        danmaku.setMedal(snum(anchor_roomid),
+                         medal_name,
+                         medal_level,
+                         QString("#%1").arg(medal_color, 6, 16, QLatin1Char('0')),
+                         "");
+        danmaku.setWealthLevel(wealth_level);
+        danmaku.setFromRoomId(pkRoomId);
+        bool opposite = pking &&
+                ((oppositeAudience.contains(uid) && !myAudience.contains(uid))
+                 || (!pkRoomId.isEmpty() &&
+                     snum(static_cast<qint64>(anchor_roomid)) == pkRoomId));
+        danmaku.setOpposite(opposite);
+
+        // 设置json输出选项
+        google::protobuf::util::JsonOptions options;
+        // 保留proto的原始变量名，默认是false，也就是采用小驼峰的方式输出变量名
+        options.preserve_proto_field_names = true;
+        // 这个应该是要求输出数字类型时，是否采用int来输出。默认是false，也就是采用string来输出
+        options.always_print_enums_as_ints = true;
+        std::string temp;
+        google::protobuf::util::MessageToJsonString(interact_word_v2_data, &temp, options);
+        QString proto_to_json_string = QString::fromStdString(temp);
+        QJsonDocument doc = QJsonDocument::fromJson(proto_to_json_string.toUtf8());
+        QJsonObject json_data_interact_word_v2 = doc.object();
+        danmaku.with(json_data_interact_word_v2);
+        qint32 guard_level = 0;
+        if (interact_word_v2_data.has_uinfo()
+            && interact_word_v2_data.mutable_uinfo()->has_guard()
+            )
+        {
+            guard_level = interact_word_v2_data.mutable_uinfo()->mutable_guard()->level();
+        }
+        danmaku.setGuardLevel(guard_level);
+        // 这里就直接从这条消息里的数据获取了，不在从大航海列表获取了。
+        // for (const auto& guard: guardInfos)
+        //     if (guard.getUid() == uid)
+        //     {
+        //         danmaku.setGuardLevel(guard.getGuard());
+        //         break;
+        //     }
+        if (roomId != "0" && roomId != ac->roomId) // 关注对面主播，也会引发关注事件
+        {
+            qInfo() << "不是本房间，已忽略：" << roomId << "!=" << ac->roomId;
+            return ;
+        }
+        if (msgType == 1) // 进入直播间
+        {
+            receiveUserCome(danmaku);
+
+            triggerCmdEvent(cmd, danmaku);
+        }
+        else if (msgType == 2) // 2关注 4特别关注
+        {
+            danmaku.transToAttention(timestamp);
+            appendNewLiveDanmaku(danmaku);
+
+            emit signalSendAttentionThank(danmaku);
+
+            triggerCmdEvent("ATTENTION", danmaku); // !这个是单独修改的
+        }
+        else if (msgType == 3) // 分享直播间
+        {
+            danmaku.transToShare();
+            localNotify(username + "分享了直播间", uid);
+
+            triggerCmdEvent("SHARE", danmaku);
+        }
+        else if (msgType == 4) // 特别关注
+        {
+            danmaku.transToAttention(timestamp);
+            danmaku.setSpecial(1);
+            appendNewLiveDanmaku(danmaku);
+
+            emit signalSendAttentionThank(danmaku);
+
+            triggerCmdEvent("SPECIAL_ATTENTION", danmaku); // !这个是单独修改的
+        }
+        else if (msgType == 5)
+        {
+            // TODO:没懂是啥，难道是取关？
+        }
+        else
+        {
+            qWarning() << "~~~~~~~~~~~~~~~~~~~~~~~~新的进入msgType" << msgType << json;
+        }
     }
     else if (cmd == "INTERACT_WORD")
     {

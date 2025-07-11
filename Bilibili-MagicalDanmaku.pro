@@ -20,7 +20,7 @@ unix {
 
 # 图片太大，会导致 cc1plus.exe:-1: error: out of memory allocating 4198399 bytes 错误
 CONFIG += resources_big
-
+QMAKE_CXXFLAGS += "-Wa,-mbig-obj"
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
@@ -58,9 +58,15 @@ contains(DEFINES, ENABLE_TEXTTOSPEECH) {
 # QMAKE_LFLAGS_RELEASE = /INCREMENTAL:NO /DEBUG # 这个报错！
 # 调用库
 # LIBS += -lDbgHelp
+# 添加protobuf的支持
+QMAKE_LIBDIR += $$PWD/third_party/protobuf/protobuf_3.9.0/lib
+LIBS += -lprotobuf
+#LIBS += -L$$PWD/third_party/protobuf/protobuf_3.9.0/lib/ -lprotobuf
 
 
 INCLUDEPATH += \
+    third_party/protobuf/protobuf_3.9.0/include \
+    third_party/protobuf/all_pb \
     global/ \
     mainwindow/ \
     services/ \
@@ -106,6 +112,7 @@ INCLUDEPATH += \
     third_party/cron/
 
 SOURCES += \
+    third_party/protobuf/all_pb/interact_word_v2.pb.cc \
     global/usersetting.cpp \
     mainwindow/run_cmd.cpp \
     services/chat_service/chatservice.cpp \
@@ -244,6 +251,7 @@ SOURCES += \
     widgets/video_lyric_creator/videolyricscreator.cpp
 
 HEADERS += \
+    third_party/protobuf/all_pb/interact_word_v2.pb.h \
     global/accountinfo.h \
     global/debounce.h \
     global/platforminfo.h \
