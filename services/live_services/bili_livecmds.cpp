@@ -1,5 +1,6 @@
 // 这个也只能放在前面？？
-#include "interact_word_v2.pb.h"
+#include "all_pb/interact_word_v2.pb.h"
+#include "all_pb/online_rank_v3.pb.h"
 #include "google/protobuf/util/json_util.h"
 #include "bili_liveservice.h"
 #include "utils/bili_api_util.h"
@@ -761,7 +762,7 @@ bool BiliLiveService::handlePK(QJsonObject json)
 void BiliLiveService::handleMessage(QJsonObject json)
 {
     QString cmd = json.value("cmd").toString();
-    qInfo() << s8(">消息命令ZCOM：") << cmd;
+    qInfo() << s8(">消息命令ZCOM：") << cmd << json;
     if (cmd == "LIVE") // 开播？
     {
         emit signalLiveStarted();
@@ -1535,13 +1536,12 @@ void BiliLiveService::handleMessage(QJsonObject json)
         const QJsonObject& data_uinfo = data["uinfo"].toObject();
         const QJsonObject& data_uinfo_wealth = data_uinfo["wealth"].toObject();
         const QJsonObject& data_uinfo_base = data_uinfo["base"].toObject();
-        const QJsonObject& data_uinfo_base_guard = data_uinfo_base["guard"].toObject();
-        const QJsonObject& data_uinfo_base_medal = data_uinfo_base["medal"].toObject();
+        const QJsonObject& data_uinfo_guard = data_uinfo["guard"].toObject();
+        const QJsonObject& data_uinfo_medal = data_uinfo["medal"].toObject();
         qint64 trigger_time = static_cast<qint64>(data.value("trigger_time").toDouble());
         qint64 timestamp = trigger_time / 1000000000;
         QString unameColor = data_uinfo_base["name_color_str"].toString();
-        const QJsonObject& data_uinfo_medal = data_uinfo["medal"].toObject();
-        qint32 guard_level = data_uinfo_base_guard["level"].toInt();
+        qint32 guard_level = data_uinfo_guard["level"].toInt();
         QString uname = data_uinfo_base["name"].toString();
         qint32 wealthy_level = data_uinfo_wealth["level"].toInt();
         QString localName = us->getLocalNickname(uid);
@@ -1565,9 +1565,9 @@ void BiliLiveService::handleMessage(QJsonObject json)
         danmaku.setTime(QDateTime::fromSecsSinceEpoch(timestamp));
         danmaku.setUnameColor(unameColor);
         danmaku.setWealthLevel(wealthy_level);
-        danmaku.setMedal("0",data_uinfo_base_medal.value("name").toString(),
-            data_uinfo_base_medal.value("level").toInt(),
-            QString("#%1").arg(data_uinfo_base_medal.value("color").toInt(), 6, 16,
+        danmaku.setMedal("0",data_uinfo_medal.value("name").toString(),
+            data_uinfo_medal.value("level").toInt(),
+            QString("#%1").arg(data_uinfo_medal.value("color").toInt(), 6, 16,
                 QLatin1Char('0')), "");
         // userComeEvent(danmaku); // 用户进入就有提示了（舰长提示会更频繁）
         // 临时解决方案
@@ -1649,13 +1649,14 @@ void BiliLiveService::handleMessage(QJsonObject json)
         google::protobuf::util::JsonOptions options;
         // 保留proto的原始变量名，默认是false，也就是采用小驼峰的方式输出变量名
         options.preserve_proto_field_names = true;
-        // 这个应该是要求输出数字类型时，是否采用int来输出。默认是false，也就是采用string来输出
+        // 这个应该是要求输出枚举类型时，是否采用int来输出。默认是false，也就是采用string来输出，也就是输出那个枚举的变量名
         options.always_print_enums_as_ints = true;
         std::string temp;
         google::protobuf::util::MessageToJsonString(interact_word_v2_data, &temp, options);
         QString proto_to_json_string = QString::fromStdString(temp);
         QJsonDocument doc = QJsonDocument::fromJson(proto_to_json_string.toUtf8());
         QJsonObject json_data_interact_word_v2 = doc.object();
+        qInfo() << "[INTERACT_WORD_V2]protobuf to json data is " << json_data_interact_word_v2;
         danmaku.with(json_data_interact_word_v2);
         qint32 guard_level = 0;
         if (interact_word_v2_data.has_uinfo()
@@ -2006,6 +2007,88 @@ void BiliLiveService::handleMessage(QJsonObject json)
         }
 
         triggerCmdEvent(cmd, LiveDanmaku().with(json.value("data").toObject()));
+    }
+    else if (cmd == "ONLINE_RANK_V3") // 礼物榜（高能榜）更新 pb协议
+    {
+        /*{
+            "cmd": "ONLINE_RANK_V2",
+            "data": {
+                "list": [
+                    {
+                        "face": "http://i0.hdslb.com/bfs/face/5eae154b4ed09c8ae4017325f5fa1ed8fa3757a9.jpg",
+                        "guard_level": 3,
+                        "rank": 1,
+                        "score": "1380",
+                        "uid": 480643475,
+                        "uname": "分说的佛酱"
+                    },
+                    {
+                        "face": "http://i2.hdslb.com/bfs/face/65536122b97302b86b93847054d4ab8cc155afe3.jpg",
+                        "guard_level": 3,
+                        "rank": 2,
+                        "score": "610",
+                        "uid": 407543009,
+                        "uname": "布可人"
+                    },
+                    ..........
+                ],
+                "rank_type": "gold-rank"
+            }
+        }*/
+
+        QJsonObject data = json.value("data").toObject();
+        QString pb_base64 = data["pb"].toString();
+        QByteArray pb_bytes = QByteArray::fromBase64(pb_base64.toUtf8());
+
+        online_rank_v3::OnlineRankV3 online_rank_v3_data;
+
+        online_rank_v3_data.ParseFromArray(pb_bytes, pb_bytes.size());
+
+        // 设置json输出选项
+        google::protobuf::util::JsonOptions options;
+        // 保留proto的原始变量名，默认是false，也就是采用小驼峰的方式输出变量名
+        options.preserve_proto_field_names = true;
+        // 这个应该是要求输出枚举类型时，是否采用int来输出。默认是false，也就是采用string来输出，也就是输出那个枚举的变量名
+        options.always_print_enums_as_ints = true;
+        std::string temp;
+        google::protobuf::util::MessageToJsonString(online_rank_v3_data, &temp, options);
+        QString proto_to_json_string = QString::fromStdString(temp);
+        QJsonDocument doc = QJsonDocument::fromJson(proto_to_json_string.toUtf8());
+        QJsonObject json_data_online_rank_v3_data = doc.object();
+        qInfo() << "[ONLINE_RANK_V3] protobuf to json data is " << json_data_online_rank_v3_data;
+
+        const google::protobuf::RepeatedPtrField<online_rank_v3::OnlineRankV3_GoldRankBroadcastItem>* online_list = online_rank_v3_data.mutable_online_list();
+
+        // QJsonArray array = json.value("data").toObject().value("list").toArray();
+
+
+        // 因为高能榜上的只有名字和ID，没有粉丝牌，有需要的话还是需要手动刷新一下
+        if (online_list->size() != onlineGoldRank.size())
+        {
+            // 还是不更新了吧，没有必要
+            // updateOnlineGoldRank();
+        }
+        else
+        {
+            // 如果仅仅是排名和金瓜子，那么就挨个修改吧
+            for (auto val=online_list->begin();val != online_list->end(); val++)
+            {
+
+                UIDT uid = snum(static_cast<qint64>(val->uid()));
+                int score = QString::fromStdString(val->score()).toInt();
+                int rank = val->rank();
+                for (int i = 0; i < onlineGoldRank.size(); i++)
+                {
+                    if (onlineGoldRank.at(i).getUid() == uid)
+                    {
+                        onlineGoldRank[i].setFirst(rank);
+                        onlineGoldRank[i].setTotalCoin(score);
+                        break;
+                    }
+                }
+            }
+        }
+        triggerCmdEvent(cmd, LiveDanmaku().with(json_data_online_rank_v3_data));
     }
     else if (cmd == "ONLINE_RANK_TOP3") // 高能榜前3变化（不知道会不会跟着 ONLINE_RANK_V2）
     {
@@ -2752,7 +2835,7 @@ void BiliLiveService::handleMessage(QJsonObject json)
     }
     else
     {
-        // qDebug() << "未处理的命令：" << cmd << json;
+        qInfo() << "未处理的命令：" << cmd << json;
         triggerCmdEvent(cmd, LiveDanmaku().with(json));
     }
 }

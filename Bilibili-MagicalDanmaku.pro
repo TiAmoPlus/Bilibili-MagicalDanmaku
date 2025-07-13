@@ -66,7 +66,7 @@ LIBS += -lprotobuf
 
 INCLUDEPATH += \
     third_party/protobuf/protobuf_3.9.0/include \
-    third_party/protobuf/all_pb \
+    third_party/protobuf \
     global/ \
     mainwindow/ \
     services/ \
@@ -110,9 +110,11 @@ INCLUDEPATH += \
     third_party/m3u8_downloader/ \
     third_party/brotli/include/ \
     third_party/cron/
-
+pb_cpp_files = $$files(third_party/protobuf/all_pb/*.cc, true)
+pb_h_files = $$files(third_party/protobuf/all_pb/*.h, true)
+SOURCES += $$pb_cpp_files
+HEADERS += $$pb_h_files
 SOURCES += \
-    third_party/protobuf/all_pb/interact_word_v2.pb.cc \
     global/usersetting.cpp \
     mainwindow/run_cmd.cpp \
     services/chat_service/chatservice.cpp \
@@ -251,7 +253,6 @@ SOURCES += \
     widgets/video_lyric_creator/videolyricscreator.cpp
 
 HEADERS += \
-    third_party/protobuf/all_pb/interact_word_v2.pb.h \
     global/accountinfo.h \
     global/debounce.h \
     global/platforminfo.h \
