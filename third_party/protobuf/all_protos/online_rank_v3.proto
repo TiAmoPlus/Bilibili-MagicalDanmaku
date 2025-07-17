@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package online_rank_v3;
+
+message OnlineRankV3 {
+  message GoldRankBroadcastItem {
+    message UserInfo {
+      message Base {
+        message RiskCtrlInfo {
+          string name = 1;
+          string face = 2;
+        }
+        message AccountInfo {
+          string name = 1;
+          string face = 2;
+        }
+        message OfficialInfo {
+          int64 role = 1;
+          string title = 2;
+          string desc = 3;
+          int64 type = 4;
+        }
+        string name = 1;
+        string face = 2;
+        int32 name_color = 3;
+        bool is_mystery = 4;
+        RiskCtrlInfo risk_ctrl_info = 5;
+        AccountInfo origin_info = 6;
+        OfficialInfo official_info = 7;
+        string name_color_str = 8;
+      }
+      message Medal {
+        string name = 1;
+        int64 level = 2;
+        int64 color_start = 3;
+        int64 color_end = 4;
+        int64 color_border = 5;
+        int64 color = 6;
+        int64 id = 7;
+        int32 typ = 8;
+        int64 is_light = 9;
+        int64 ruid = 10;
+        int64 guard_level = 11;
+        int64 score = 12;
+        string guard_icon = 13;
+        string honor_icon = 14;
+        string v2_medal_color_start = 15;
+        string v2_medal_color_end = 16;
+        string v2_medal_color_border = 17;
+        string v2_medal_color_text = 18;
+        string v2_medal_color_level = 19;
+        int64 user_receive_count = 20;
+      }
+      message Wealth {
+        int64 level = 1;
+        string dm_icon_key = 2;
+      }
+      message Title {
+        string OldTitleCssId = 1;
+        string TitleCssId = 2;
+      }
+      message Guard {
+        int64 level = 1;
+        string expired_str = 2;
+      }
+      message UserHeadFrame {
+        int64 id = 1;
+        string frame_img = 2;
+      }
+      message GuardLeader {
+        bool is_guard_leader = 1;
+      }
+      int64 uid = 1;
+      Base base = 2;
+      Medal medal = 3;
+      Wealth wealth = 4;
+      Title title = 5;
+      Guard guard = 6;
+      UserHeadFrame uhead_frame = 7;
+      GuardLeader guard_leader = 8;
+    }
+
+    int64 uid = 1;
+    string face = 2;
+    string score = 3;
+    string uname = 4;
+    int64 rank = 5;
+    int64 guard_level =6;
+    bool is_mystery = 7;
+    UserInfo uinfo = 8;
+  }
+  string rank_type = 1;
+  repeated GoldRankBroadcastItem list = 2;
+  repeated GoldRankBroadcastItem online_list = 3;
+
+}
