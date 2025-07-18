@@ -777,7 +777,8 @@ QStringList CodeRunner::getEditConditionStringList(QString plainText, LiveDanmak
             QString s = result.at(i);
             if (s.contains(">") || s.contains("\\n")) // 包含多行或者命令的，不需要或者懒得判断长度
                 continue;
-            s = s.replace(QRegExp("^\\s+\\(\\s*[\\w\\d: ,]*\\s*\\)"), "").replace("*", "").trimmed(); // 去掉发送选项
+            s = s.replace(QRegExp("^[\\s\\*]*\\([\\w\\d:\\s,]*\\)"), "").trimmed(); // 去掉发送选项
+            // s = s.replace(QRegExp("^\\s+\\(\\s*[\\w\\d: ,]*\\s*\\)"), "").replace("*", "").trimmed(); // 去掉发送选项
             // s = s.replace(QRegExp("^\\s+\\(\\s*cd\\d+\\s*:\\s*\\d+\\s*\\)"), "").replace("*", "").trimmed();
             if (s.length() > ac->danmuLongest && !s.contains("%"))
             {
