@@ -5,6 +5,9 @@
 #include "bili_liveservice.h"
 #include "utils/bili_api_util.h"
 #include "coderunner.h"
+// todo dave 暂时不用  nanopb
+//#include "bili_nanopb/interact_word_v2.pb.h"
+//#include "nanopb/pb_decode.h"
 
 /**
  * 接收到原始数据
@@ -822,7 +825,7 @@ void BiliLiveService::handleMessage(QJsonObject json)
             cs = "0" + cs;
         LiveDanmaku danmaku(username, msg, uid, level, QDateTime::fromMSecsSinceEpoch(timestamp),
                                                  unameColor, "#"+cs);
-        danmaku.setFromRoomId(pkRoomId);
+        danmaku.setFromRoomId(ac->roomId);
         danmaku.setUserInfo(admin, vip, svip, uidentity, iphone, uguard);
         if (medal.size() >= 4)
         {
@@ -1090,7 +1093,7 @@ void BiliLiveService::handleMessage(QJsonObject json)
         danmaku.setDiscountPrice(discountPrice);
         danmaku.setWealthLevel(wealth_level);
         danmaku.setOriginalGiftName(originalGiftName);
-        danmaku.setFromRoomId(pkRoomId);
+        danmaku.setFromRoomId(ac->roomId);
         if (!data.value("medal_info").isNull())
         {
             QJsonObject medalInfo = data.value("medal_info").toObject();
@@ -1346,7 +1349,7 @@ void BiliLiveService::handleMessage(QJsonObject json)
 
         LiveDanmaku danmaku(uname, message, snum(uid), user_level, QDateTime::fromSecsSinceEpoch(end_time), name_color, message_font_color,
                     gift_id, gift_name, num, price);
-        danmaku.setFromRoomId(pkRoomId);
+        danmaku.setFromRoomId(ac->roomId);
         danmaku.setMedal(snum(anchor_roomid), medal_name, medal_level, medal_color, anchor_uname);
         appendNewLiveDanmaku(danmaku);
 
@@ -1462,75 +1465,103 @@ void BiliLiveService::handleMessage(QJsonObject json)
             username = localName;*/
         LiveDanmaku danmaku(LiveDanmaku(username, uid, QDateTime::fromSecsSinceEpoch(timestamp)
                                         , true, unameColor, spreadDesc, spreadInfo));
-        danmaku.setFromRoomId(pkRoomId);
+        danmaku.setFromRoomId(ac->roomId);
         appendNewLiveDanmaku(danmaku);
 
         triggerCmdEvent(cmd, danmaku.with(data));
     }
     else  if (cmd == "ENTRY_EFFECT") // 舰长进入、高能榜（不知道到榜几）、姥爷的同时会出现
     {
-        // 欢迎舰长
+        // 2025.07处调整过的
         /*{
             "cmd": "ENTRY_EFFECT",
             "data": {
-                "id": 4,
-                "uid": 20285041,
-                "target_id": 688893202,
+                "id": 381,
+                "uid": 388690793,
+                "target_id": 1871001,
                 "mock_effect": 0,
-                "face": "https://i2.hdslb.com/bfs/face/24420cdcb6eeb119dbcd1f1843fdd8ada5b7d045.jpg",
-                "privilege_type": 3,
-                "copy_writing": "欢迎舰长 \\u003c%心乂鸽鸽%\\u003e 进入直播间",
-                "copy_color": "#ffffff",
-                "highlight_color": "#E6FF00",
-                "priority": 70,
-                "basemap_url": "https://i0.hdslb.com/bfs/live/mlive/f34c7441cdbad86f76edebf74e60b59d2958f6ad.png",
-                "show_avatar": 1,
-                "effective_time": 2,
-                "web_basemap_url": "",
-                "web_effective_time": 0,
-                "web_effect_close": 0,
-                "web_close_time": 0,
-                "business": 1,
-                "copy_writing_v2": "欢迎 \\u003c^icon^\\u003e 舰长 \\u003c%心乂鸽鸽%\\u003e 进入直播间",
-                "icon_list": [
-                    2
-                ],
-                "max_delay_time": 7
-            }
-        }*/
-
-        // 欢迎姥爷
-        /*{
-            "cmd": "ENTRY_EFFECT",
-            "data": {
-                "basemap_url": "https://i0.hdslb.com/bfs/live/mlive/586f12135b6002c522329904cf623d3f13c12d2c.png",
-                "business": 3,
-                "copy_color": "#000000",
-                "copy_writing": "欢迎 <%___君陌%> 进入直播间",
-                "copy_writing_v2": "欢迎 <^icon^> <%___君陌%> 进入直播间",
-                "effective_time": 2,
-                "face": "https://i1.hdslb.com/bfs/face/8fb8336e1ae50001ca76b80c30b01d23b07203c9.jpg",
-                "highlight_color": "#FFF100",
-                "icon_list": [
-                    2
-                ],
-                "id": 136,
-                "max_delay_time": 7,
-                "mock_effect": 0,
-                "priority": 1,
+                "face": "https://i2.hdslb.com/bfs/face/9f24565bdf2b0625e8cf9a05f69724a2c8337b6f.jpg",
                 "privilege_type": 0,
-                "show_avatar": 1,
-                "target_id": 5988102,
-                "uid": 453364,
-                "web_basemap_url": "https://i0.hdslb.com/bfs/live/mlive/586f12135b6002c522329904cf623d3f13c12d2c.png",
+                "copy_writing": "\u003c%碎碎白%\u003e 来了",
+                "copy_color": "#F7F7F7",
+                "highlight_color": "#FFFFFF",
+                "priority": 1,
+                "basemap_url": "",
+                "show_avatar": 0,
+                "effective_time": 0,
+                "web_basemap_url": "https://i0.hdslb.com/bfs/live/mlive/b436ffaac9ef05903023cc6acbcb59376d10ccd1.png",
+                "web_effective_time": 4,
+                "web_effect_close": 1,
                 "web_close_time": 900,
-                "web_effect_close": 0,
-                "web_effective_time": 2
+                "business": 6,
+                "copy_writing_v2": "\u003c%碎碎白%\u003e 来了",
+                "icon_list": [],
+                "max_delay_time": 7,
+                "trigger_time": 1751703356904700672,
+                "identities": 1,
+                "effect_silent_time": 0,
+                "effective_time_new": 0,
+                "web_dynamic_url_webp": "",
+                "web_dynamic_url_apng": "",
+                "mobile_dynamic_url_webp": "",
+                "wealthy_info": {
+                    "uid": 0,
+                    "level": 21,
+                    "level_total_score": 0,
+                    "cur_score": 0,
+                    "upgrade_need_score": 0,
+                    "status": 0,
+                    "dm_icon_key": ""
+                },
+                "new_style": 1,
+                "is_mystery": false,
+                "uinfo": {
+                    "uid": 388690793,
+                    "base": {
+                        "name": "碎碎白",
+                        "face": "https://i2.hdslb.com/bfs/face/9f24565bdf2b0625e8cf9a05f69724a2c8337b6f.jpg",
+                        "name_color": 0,
+                        "is_mystery": false,
+                        "risk_ctrl_info": null,
+                        "origin_info": null,
+                        "official_info": null,
+                        "name_color_str": ""
+                    },
+                    "medal": null,
+                    "wealth": {
+                        "level": 21,
+                        "dm_icon_key": ""
+                    },
+                    "title": null,
+                    "guard": {
+                        "level": 0,
+                        "expired_str": ""
+                    },
+                    "uhead_frame": null,
+                    "guard_leader": null
+                },
+                "full_cartoon_id": 1801,
+                "priority_level": 0,
+                "wealth_style_info": {
+                    "url": "https://i0.hdslb.com/bfs/live/690c9a06d47e9cc53d78c0d951caef97bfcc6374.png"
+                }
             }
         }*/
         QJsonObject data = json.value("data").toObject();
+        // todo dave 这里看一下 有没有用到
+        int id = data["id"].toInt(); // 一个很小的ID，如4/380/381
+        int target_id = data["target_id"].toInt(); // 似乎是直播间号？ 这里是主播uid
+        // todo dave 这里看一下 有没有用到
+        QString face = data["face"].toString();
         UIDT uid = snum(static_cast<qint64>(data.value("uid").toDouble()));
         QString copy_writing = data.value("copy_writing").toString();
+        // todo dave 这里看下有没有用
+        QString copy_writing_v2 = data["copy_writing_v2"].toString();
+        if (copy_writing_v2.isEmpty())
+        {
+            // todo dave 这里看下有没有用
+            // copy_writing = data.value("copy_writing").toString();
+        }
         qInfo() << "高能榜进入：" << copy_writing;
         QStringList results = QRegularExpression("欢迎(舰长|提督|总督)?.+?<%(.+)%>").match(copy_writing).capturedTexts();
         const QJsonObject& data_uinfo = data["uinfo"].toObject();
@@ -1548,6 +1579,15 @@ void BiliLiveService::handleMessage(QJsonObject json)
         // 先尝试 能不能在高能榜上获取到这个用户.
         LiveDanmaku danmaku;
 
+        // todo dave 这个看一下有没有用
+        MyJson base = data_uinfo_base;
+        {
+            QString name = base.s("name");
+            face = base.s("face");
+            QString name_color_str = base.s("name_color_str");
+            // todo dave 这个setUser是干嘛的
+            danmaku.setUser(name, uid, face, name_color_str, name_color_str);
+        }
 
         danmaku.setWealthLevel(wealthy_level);
         for (int i = 0; i < onlineGoldRank.size(); i++)
@@ -1558,6 +1598,22 @@ void BiliLiveService::handleMessage(QJsonObject json)
                 break;
             }
         }
+
+        // todo dave 看下 setMedal 是不是改了 感觉和下面不一样了
+        MyJson medal = data_uinfo_medal;
+        if (!medal.isEmpty())
+        {
+            QString medal_name = medal.s("name");
+            int medal_level = medal.i("level");
+            QString medal_color = medal.s("color");
+            bool is_light = medal.b("is_light");
+            qint64 room_id = medal.l("target_id");
+            int guard_level = medal.i("guard_level");
+            int score = medal.i("score");
+            // todo dave 看下 setMedal 是不是改了 感觉和下面不一样了
+            danmaku.setMedal(snum(room_id), medal_name, medal_level, medal_color);
+        }
+
         // 如果找到了 其他数据就继续用保存的高能榜数据，但是这里是可以更新到新的数据的。比如昵称之类的。
         danmaku.setGuardLevel(guard_level);
         danmaku.setNickname(uname);
@@ -1582,7 +1638,7 @@ void BiliLiveService::handleMessage(QJsonObject json)
                     (medal_ruid != 0 ) &&
                      medal_ruid == pkRoomInfo.extraJson["room_info"].toObject()["uid"].toString()));
         danmaku.setOpposite(opposite);
-        danmaku.setFromRoomId(pkRoomId);
+        danmaku.setFromRoomId(ac->roomId);
 
         // receiveUserCome(danmaku);
         triggerCmdEvent(cmd, danmaku.with(data));
@@ -1787,7 +1843,7 @@ void BiliLiveService::handleMessage(QJsonObject json)
                          QString("#%1").arg(fansMedal.value("medal_color").toInt(), 6, 16, QLatin1Char('0')),
                          "");
         danmaku.setWealthLevel(wealth_level);
-        danmaku.setFromRoomId(pkRoomId);
+        danmaku.setFromRoomId(roomId);
 
         bool opposite = pking &&
                 ((oppositeAudience.contains(uid) && !myAudience.contains(uid))
@@ -1849,6 +1905,91 @@ void BiliLiveService::handleMessage(QJsonObject json)
         {
             qWarning() << "~~~~~~~~~~~~~~~~~~~~~~~~新的进入msgType" << msgType << json;
         }
+    }
+    else if (cmd == "INTERACT_WORD_V2")
+    {
+        // todo dave 对比一下 我写的INTERACT_WORD_V2 解析 看下有没有新增的功能
+        MyJson data = json.value("data").toObject();
+        int dmscore = data.i("dmscore");
+        QString pb_base64 = data.s("pb"); // 这是base64编码
+        QByteArray pb = QByteArray::fromBase64(pb_base64.toUtf8());
+        // 开始解析PB
+        // 1. 获取原始数据指针和长度
+        const uint8_t* buffer = reinterpret_cast<const uint8_t*>(pb.constData());
+        size_t size = pb.size();
+
+        // 2. 初始化消息结构体（清空原有数据）
+        InteractWordV2 iw2 = InteractWordV2_init_zero;
+
+        // 3. 创建输入流
+        pb_istream_t stream = pb_istream_from_buffer(buffer, size);
+
+        // 4. 解析数据
+        if (!pb_decode(&stream, InteractWordV2_fields, &iw2)) {
+            qDebug() << "Decoding failed:" << PB_GET_ERROR(&stream);
+            return;
+        }
+
+        qint64 uid = iw2.uid;
+        QString uname = iw2.uname;
+        qint64 timestamp = iw2.timestamp;
+        int msgType = iw2.msg_type; // 1是进入
+        qint64 roomId = iw2.room_id;
+        int guardLevel = iw2.guard_level;
+        qInfo() << "用户进入：" << uname << uid << msgType << roomId << guardLevel << timestamp;
+
+        auto fansMedal = iw2.fans_medal;
+        auto rankInfo = iw2.rank_info;
+        auto userInfo = iw2.uinfo;
+        auto baseInfo = userInfo.base;
+        auto medalInfo = userInfo.medal_info;
+        auto wealthInfo = userInfo.wealth;
+        auto guardInfo = userInfo.guard;
+        LiveDanmaku danmaku;
+        danmaku.setTime(QDateTime::fromSecsSinceEpoch(timestamp));
+        danmaku.setFromRoomId(ac->roomId);
+        danmaku.setUser(baseInfo.uname, snum(iw2.uid), baseInfo.face, baseInfo.name_color_str);
+        danmaku.setMedal(snum(fansMedal.room_id), medalInfo.medal_name, medalInfo.medal_level, medalInfo.v2_medal_color_text, "", snum(medalInfo.ruid));
+
+        danmaku.setGuardLevel(guardInfo.level, guardInfo.expired_str); //过期时间示例：2025-07-15 23:59:59
+
+        if (msgType == 1) // 欢迎
+        {
+            danmaku.setMsgType(MSG_WELCOME);
+            receiveUserCome(danmaku);
+        }
+        else if (msgType == 2) // 关注
+        {
+            danmaku.transToAttention(timestamp);
+            appendNewLiveDanmaku(danmaku);
+
+            emit signalSendAttentionThank(danmaku);
+
+            triggerCmdEvent("ATTENTION", danmaku.with(data)); // !这个是单独修改的
+        }
+        else if (msgType == 3) // 分享
+        {
+            danmaku.transToShare();
+            localNotify(uname + "分享了直播间", snum(uid));
+
+            triggerCmdEvent("SHARE", danmaku.with(data));
+        }
+        else if (msgType == 4) // 特别关注
+        {
+            danmaku.transToAttention(timestamp);
+            danmaku.setSpecial(1);
+            appendNewLiveDanmaku(danmaku);
+
+            emit signalSendAttentionThank(danmaku);
+
+            triggerCmdEvent("SPECIAL_ATTENTION", danmaku.with(data)); // !这个是单独修改的
+        }
+        else
+        {
+            qWarning() << "未知的交互MsgType=" << msgType;
+        }
+
+        triggerCmdEvent(cmd, danmaku.with(data));
     }
     else if (cmd == "ROOM_BLOCK_MSG") // 被禁言
     {
