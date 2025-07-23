@@ -595,6 +595,11 @@ public:
         this->timeline = time;
     }
 
+    void setTextColor(QString text_color)
+    {
+        this->text_color = text_color;
+    }
+
     void setRobot(bool r)
     {
         this->robot = r;
